@@ -1,0 +1,52 @@
+[
+  {
+    "id": "puma-darter-pro",
+    "name": "Puma Darter Pro",
+    "category": "Tênis corrida",
+    "store": "Loja Demo A",
+    "price": 349.9,
+    "original_price": 449.9,
+    "url": "https://example.com/puma-darter-pro",
+    "rating": 4.7
+  },
+  {
+    "id": "adidas-response-runner-2",
+    "name": "Adidas Response Runner 2",
+    "category": "Tênis corrida",
+    "store": "Loja Demo B",
+    "price": 379.9,
+    "original_price": 429.9,
+    "url": "https://example.com/adidas-response-runner-2",
+    "rating": 4.6
+  },
+  {
+    "id": "nike-downshifter",
+    "name": "Nike Downshifter",
+    "category": "Tênis corrida",
+    "store": "Loja Demo C",
+    "price": 399.9,
+    "original_price": 499.9,
+    "url": "https://example.com/nike-downshifter",
+    "rating": 4.5
+  },
+  {
+    "id": "notebook-ryzen-16gb",
+    "name": "Notebook Ryzen 5 16GB SSD 512GB",
+    "category": "Notebook Data Science",
+    "store": "Loja Demo A",
+    "price": 3599.0,
+    "original_price": 4199.0,
+    "url": "https://example.com/notebook-ryzen",
+    "rating": 4.8
+  },
+  {
+    "id": "fone-bluetooth-anc",
+    "name": "Fone Bluetooth ANC",
+    "category": "Áudio fone bluetooth",
+    "store": "Loja Demo D",
+    "price": 289.9,
+    "original_price": 349.9,
+    "url": "https://example.com/fone-anc",
+    "rating": 4.4
+  }
+]
