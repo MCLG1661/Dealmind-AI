@@ -12,6 +12,9 @@ app = FastAPI(
     title="DealMind AI API",
     description="Copilot de ofertas para corrida e fitness.",
     version="0.2.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
 )
 
 class AlertCreate(BaseModel):
