@@ -72,3 +72,24 @@ def alerts_create(payload: AlertCreate) -> dict:
 @app.get("/alerts")
 def alerts_list() -> list[dict]:
     return list_alerts()
+
+@app.get("/callback/mercadolivre")
+def mercado_livre_callback(code: str | None = None, error: str | None = None) -> dict:
+    if error:
+        return {
+            "success": False,
+            "error": error,
+            "message": "Mercado Livre authorization failed."
+        }
+
+    if not code:
+        return {
+            "success": False,
+            "message": "Authorization code was not provided."
+        }
+
+    return {
+        "success": True,
+        "message": "Authorization code received successfully.",
+        "code": code
+    }
