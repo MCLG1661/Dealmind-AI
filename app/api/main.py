@@ -13,12 +13,13 @@ from app.services.marketplace_service import (
 )
 from app.services.search_service import search_products
 from app.services.recommendation_service import build_recommendation
+from app.services.token_store import save_tokens, token_status
 
 
 app = FastAPI(
     title="DealMind AI API",
     description="Copilot de ofertas para corrida e fitness.",
-    version="0.2.0",
+    version="0.2.1",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
@@ -41,8 +42,13 @@ def health() -> dict:
     return {
         "status": "ok",
         "service": "dealmind-ai",
-        "version": "0.2.0",
+        "version": "0.2.1",
     }
+
+
+@app.get("/auth/status")
+def auth_status() -> dict:
+    return token_status()
 
 
 @app.get("/products/search")
@@ -54,7 +60,10 @@ def products_search(
 ) -> dict:
     if source == "demo":
         products = search_products(q, max_price=max_price)
-        recommendations = build_recommendation(products, max_price=max_price)
+        recommendations = build_recommendation(
+            products,
+            max_price=max_price,
+        )
     else:
         try:
             recommendations = search_marketplace(
@@ -131,8 +140,6 @@ def mercado_livre_callback(
             "message": "OAuth environment variables are not configured.",
         }
 
-    token_url = "https://api.mercadolibre.com/oauth/token"
-
     payload = {
         "grant_type": "authorization_code",
         "client_id": client_id,
@@ -143,17 +150,31 @@ def mercado_livre_callback(
 
     try:
         response = requests.post(
-            token_url,
+            "https://api.mercadolibre.com/oauth/token",
             data=payload,
             timeout=15,
         )
         response.raise_for_status()
         token_data = response.json()
 
+        access_token = token_data.get("access_token")
+
+        if not access_token:
+            return {
+                "success": False,
+                "message": "OAuth response did not include an access token.",
+            }
+
+        save_tokens(
+            access_token=access_token,
+            refresh_token=token_data.get("refresh_token"),
+            expires_in=token_data.get("expires_in"),
+        )
+
         return {
             "success": True,
             "message": "Mercado Livre OAuth completed successfully.",
-            "access_token_received": bool(token_data.get("access_token")),
+            "access_token_received": True,
             "refresh_token_received": bool(token_data.get("refresh_token")),
             "expires_in": token_data.get("expires_in"),
             "user_id": token_data.get("user_id"),
