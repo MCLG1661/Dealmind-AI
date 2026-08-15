@@ -5,21 +5,21 @@ from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.database.db import init_db
+from app.providers.mercado_livre_provider import MercadoLivreProviderError
 from app.repositories.alert_repository import create_alert, list_alerts
 from app.repositories.offer_repository import get_price_history
-from app.services.marketplace_service import (
-    MarketplaceNotConfigured,
-    search_marketplace,
+from app.services.provider_service import (
+    UnknownProviderError,
+    list_providers,
+    search_offers,
 )
-from app.services.search_service import search_products
-from app.services.recommendation_service import build_recommendation
 from app.services.token_store import save_tokens, token_status
 
 
 app = FastAPI(
     title="DealMind AI API",
     description="Copilot de ofertas para corrida e fitness.",
-    version="0.2.1",
+    version="0.3.0",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
@@ -42,7 +42,7 @@ def health() -> dict:
     return {
         "status": "ok",
         "service": "dealmind-ai",
-        "version": "0.2.1",
+        "version": "0.3.0",
     }
 
 
@@ -51,46 +51,51 @@ def auth_status() -> dict:
     return token_status()
 
 
+@app.get("/providers")
+def providers() -> dict:
+    return {
+        "count": len(list_providers()),
+        "providers": list_providers(),
+    }
+
+
 @app.get("/products/search")
 def products_search(
     q: str = Query(min_length=1),
     max_price: float | None = Query(default=None, gt=0),
-    source: str = Query(default="demo", pattern="^(demo|mercado_livre)$"),
+    source: str = Query(default="demo"),
     limit: int = Query(default=20, ge=1, le=50),
 ) -> dict:
-    if source == "demo":
-        products = search_products(q, max_price=max_price)
-        recommendations = build_recommendation(
-            products,
+    try:
+        products = search_offers(
+            source=source,
+            query=q,
             max_price=max_price,
+            limit=limit,
         )
-    else:
-        try:
-            recommendations = search_marketplace(
-                q,
-                max_price=max_price,
-                limit=limit,
-            )
-        except MarketplaceNotConfigured as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
-        except Exception as exc:
-            raise HTTPException(
-                status_code=502,
-                detail=f"Marketplace integration failed: {exc}",
-            ) from exc
+    except MercadoLivreProviderError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except UnknownProviderError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Provider integration failed: {exc}",
+        ) from exc
 
     return {
         "query": q,
         "max_price": max_price,
         "source": source,
-        "count": len(recommendations),
-        "products": recommendations,
+        "count": len(products),
+        "products": products,
     }
 
 
 @app.get("/products/{product_id}/history")
 def product_history(product_id: str) -> dict:
     history = get_price_history(product_id)
+
     return {
         "product_id": product_id,
         "count": len(history),
