@@ -8,13 +8,12 @@ def create_alert(
 ) -> dict:
     with get_connection() as conn:
         cursor = conn.execute(
-            '''
+            """
             INSERT INTO price_alerts (product_id, target_price, contact)
             VALUES (?, ?, ?)
-            ''',
+            """,
             (product_id, target_price, contact),
         )
-        conn.commit()
 
         row = conn.execute(
             "SELECT * FROM price_alerts WHERE id = ?",
@@ -31,3 +30,31 @@ def list_alerts() -> list[dict]:
         ).fetchall()
 
     return [dict(row) for row in rows]
+
+
+def get_active_alerts_for_product(product_id: str) -> list[dict]:
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT *
+            FROM price_alerts
+            WHERE product_id = ?
+              AND active = 1
+            ORDER BY id ASC
+            """,
+            (product_id,),
+        ).fetchall()
+
+    return [dict(row) for row in rows]
+
+
+def deactivate_alert(alert_id: int) -> None:
+    with get_connection() as conn:
+        conn.execute(
+            """
+            UPDATE price_alerts
+            SET active = 0
+            WHERE id = ?
+            """,
+            (alert_id,),
+        )

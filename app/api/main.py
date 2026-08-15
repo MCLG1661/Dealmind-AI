@@ -4,6 +4,7 @@ import requests
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
+from app.api.monitoring_routes import router as monitoring_router
 from app.database.db import init_db
 from app.providers.mercado_livre_provider import MercadoLivreProviderError
 from app.repositories.alert_repository import create_alert, list_alerts
@@ -25,6 +26,7 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+app.include_router(monitoring_router)
 
 class AlertCreate(BaseModel):
     product_id: str = Field(min_length=1)
