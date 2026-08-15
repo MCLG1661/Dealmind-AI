@@ -1,10 +1,14 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any
+
 import requests
+
 
 class MercadoLivreError(RuntimeError):
     pass
+
 
 @dataclass(frozen=True)
 class MercadoLivreOffer:
@@ -18,11 +22,17 @@ class MercadoLivreOffer:
     category_id: str | None
     currency_id: str = "BRL"
 
+
 class MercadoLivreClient:
     BASE_URL = "https://api.mercadolibre.com"
 
-    def __init__(self, access_token: str, site_id: str = "MLB",
-                 session: requests.Session | None = None, timeout: int = 15) -> None:
+    def __init__(
+        self,
+        access_token: str,
+        site_id: str = "MLB",
+        session: requests.Session | None = None,
+        timeout: int = 15,
+    ) -> None:
         if not access_token:
             raise ValueError("Mercado Livre access token is required.")
         self.access_token = access_token
@@ -38,9 +48,16 @@ class MercadoLivreClient:
             "User-Agent": "DealMindAI/0.2",
         }
 
-    def search(self, query: str, limit: int = 20,
-               max_price: float | None = None) -> list[MercadoLivreOffer]:
-        params: dict[str, Any] = {"q": query, "limit": min(max(limit, 1), 50)}
+    def search(
+        self,
+        query: str,
+        limit: int = 20,
+        max_price: float | None = None,
+    ) -> list[MercadoLivreOffer]:
+        params: dict[str, Any] = {
+            "q": query,
+            "limit": min(max(limit, 1), 50),
+        }
 
         response = self.session.get(
             f"{self.BASE_URL}/sites/{self.site_id}/search",
@@ -51,14 +68,16 @@ class MercadoLivreClient:
 
         if response.status_code in (401, 403):
             raise MercadoLivreError(
-                "Mercado Livre rejected the access token or application permissions."
+                f"Mercado Livre API returned HTTP {response.status_code}: "
+                f"{response.text}"
             )
 
         try:
             response.raise_for_status()
         except requests.HTTPError as exc:
             raise MercadoLivreError(
-                f"Mercado Livre API returned HTTP {response.status_code}."
+                f"Mercado Livre API returned HTTP {response.status_code}: "
+                f"{response.text}"
             ) from exc
 
         payload = response.json()
@@ -74,7 +93,11 @@ class MercadoLivreClient:
                 continue
 
             seller = item.get("seller")
-            seller_id = seller.get("id") if isinstance(seller, dict) else item.get("seller_id")
+            seller_id = (
+                seller.get("id")
+                if isinstance(seller, dict)
+                else item.get("seller_id")
+            )
 
             offers.append(
                 MercadoLivreOffer(
@@ -83,7 +106,8 @@ class MercadoLivreClient:
                     price=price,
                     original_price=(
                         float(item["original_price"])
-                        if item.get("original_price") is not None else None
+                        if item.get("original_price") is not None
+                        else None
                     ),
                     permalink=str(item.get("permalink", "")),
                     thumbnail=item.get("thumbnail"),
