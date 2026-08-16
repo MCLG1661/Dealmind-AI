@@ -1,5 +1,14 @@
 # DealMind AI
 
+![Python](https://img.shields.io/badge/Python-3.14-blue?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-Frontend-FF4B4B?logo=streamlit&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?logo=sqlite&logoColor=white)
+![Pytest](https://img.shields.io/badge/Pytest-9%20tests-success?logo=pytest)
+![Render](https://img.shields.io/badge/Render-API%20Live-46E3B7?logo=render&logoColor=black)
+![Streamlit Cloud](https://img.shields.io/badge/Streamlit%20Cloud-App%20Live-FF4B4B?logo=streamlit&logoColor=white)
+![Status](https://img.shields.io/badge/MVP-Functional-success)
+
 *Price Intelligence Copilot Para Monitoramento, Análise e Alertas de Preços.*
 
 O DealMind AI é um projeto de inteligência de preços desenvolvido para acompanhar produtos, registrar histórico de preços, avaliar oportunidades de compra e disparar alertas quando um preço-alvo é atingido.
@@ -21,9 +30,9 @@ https://dealmind-ai-9hme.onrender.com/docs
 
 ---
 
-## Problema
+## 🎯 Problema
 
-Consumidores frequentemente encontram dificuldade para responder perguntas simples durante uma compra:
+Consumidores frequentemente encontram dificuldade para responder perguntas simples durante uma compra :
 
 - O preço atual está realmente bom?
 - Esse produto já esteve mais barato?
@@ -35,9 +44,9 @@ O DealMind AI foi criado para transformar dados de preço em uma leitura mais ob
 
 ---
 
-## Solução
+## 💡 Solução
 
-O sistema permite:
+O sistema permite :
 
 - registrar observações de preço;
 - construir histórico de preços;
@@ -56,9 +65,9 @@ O sistema permite:
 
 ---
 
-## Dashboard de Price Intelligence
+## 📊 Dashboard de Price Intelligence
 
-O dashboard apresenta os principais indicadores do produto monitorado:
+O dashboard apresenta os principais indicadores do produto monitorado :
 
 - **Preço atual**
 - **Preço médio**
@@ -70,7 +79,7 @@ O dashboard apresenta os principais indicadores do produto monitorado:
 - **Quantidade de observações**
 - **Status dos alertas**
 
-Exemplo de cenário utilizado na demonstração:
+Exemplo de cenário utilizado na demonstração :
 
 | Indicador | Valor |
 |---|---:|
@@ -84,11 +93,11 @@ Exemplo de cenário utilizado na demonstração:
 
 ---
 
-## Deal Score
+## 🧠 Deal Score
 
 O Deal Score é uma métrica criada no projeto para representar a atratividade do preço atual em relação ao histórico observado.
 
-O cálculo considera principalmente:
+O cálculo considera principalmente :
 
 - preço atual;
 - preço médio;
@@ -105,7 +114,7 @@ Classificação: Excellent
 Preço atual: 12,63% abaixo da média
 ```
 
-## Alertas de preço
+## 🔔 Alertas de Preço
 
 O usuário pode definir um preço-alvo para um produto.
 
@@ -120,7 +129,7 @@ Disparado
 ```
 ---
 
-## Arquitetura
+## 🏗️ Arquitetura
 
 O DealMind AI utiliza uma arquitetura modular, separando interface, API, regras de negócio, persistência e providers externos.
 
@@ -153,7 +162,7 @@ Essa estrutura permite que o núcleo de Price Intelligence continue funcionando 
 
 ---
 
-## Estrutura do projeto
+## 📁 Estrutura do Projeto
 
 A organização do repositório segue uma separação entre API, serviços, providers, persistência, frontend e testes.
 
@@ -199,11 +208,11 @@ dealmind-ai
 
 ---
 
-## Tecnologias
+## 🛠️ Tecnologias
 
 O DealMind AI combina tecnologias de backend, análise de dados, frontend e cloud.
 
-### Backend e dados
+### Backend e Dados
 
 - Python
 - FastAPI
@@ -222,7 +231,7 @@ O DealMind AI combina tecnologias de backend, análise de dados, frontend e clou
 - OAuth 2.0
 - Arquitetura de Providers
 
-### Qualidade e desenvolvimento
+### Qualidade e Desenvolvimento
 
 - Pytest
 - Git
@@ -235,7 +244,7 @@ O DealMind AI combina tecnologias de backend, análise de dados, frontend e clou
 
 ---
 
-## API e principais endpoints
+## 🔌 API e Principais Endpoints
 
 O backend do DealMind AI foi desenvolvido com FastAPI e disponibiliza documentação interativa por meio do Swagger.
 
@@ -255,7 +264,7 @@ GET /providers
 
 Lista os providers disponíveis e seus respectivos status.
 
-### Busca de produtos
+### Busca de Produtos
 
 ```http
 GET /products/search
@@ -263,7 +272,7 @@ GET /products/search
 
 Realiza a busca utilizando a camada de providers.
 
-### Registrar observação de preço
+### Registrar Observação de Preço
 
 ```http
 POST /monitoring/snapshots
@@ -271,7 +280,7 @@ POST /monitoring/snapshots
 
 Registra um novo snapshot de preço e atualiza a análise do produto.
 
-### Consultar análise do produto
+### Consultar Análise do Produto
 
 ```http
 GET /monitoring/{product_id}
@@ -279,7 +288,7 @@ GET /monitoring/{product_id}
 
 Retorna indicadores como preço atual, preço médio, mínimo, máximo, variação, Deal Score e classificação da oportunidade.
 
-### Consultar histórico de preços
+### Consultar Histórico de Preços
 
 ```http
 GET /monitoring/{product_id}/history
@@ -287,7 +296,7 @@ GET /monitoring/{product_id}/history
 
 Retorna as observações de preço armazenadas para o produto.
 
-### Criar alerta
+### Criar Alerta
 
 ```http
 POST /alerts
@@ -295,7 +304,7 @@ POST /alerts
 
 Cria um alerta associado a um produto e a um preço-alvo.
 
-### Listar alertas
+### Listar Alertas
 
 ```http
 GET /alerts
@@ -305,7 +314,7 @@ Lista os alertas cadastrados e seus respectivos status.
 
 ---
 
-## Providers e integração com marketplaces
+## 🛒 Providers e Integração com Marketplaces
 
 O DealMind AI utiliza uma camada de **providers**, permitindo que diferentes fontes de produtos e preços sejam integradas sem alterar o núcleo de Price Intelligence.
 
@@ -317,7 +326,7 @@ O `DemoProvider` funciona como fonte controlada para desenvolvimento, testes e d
 
 **Status:** disponível.
 
-Ele permite validar:
+Ele permite validar :
 
 - busca de produtos;
 - integração frontend/backend;
@@ -329,7 +338,7 @@ Ele permite validar:
 
 ### Mercado Livre Provider
 
-A integração com o Mercado Livre contempla:
+A integração com o Mercado Livre contempla :
 
 - OAuth 2.0;
 - fluxo de autorização;
@@ -340,13 +349,13 @@ A integração com o Mercado Livre contempla:
 - provider específico;
 - tratamento de erros da API externa.
 
-Durante o desenvolvimento, a autenticação OAuth foi validada com sucesso. Entretanto, o endpoint genérico de busca utilizado pela aplicação:
+Durante o desenvolvimento, a autenticação OAuth foi validada com sucesso. Entretanto, o endpoint genérico de busca utilizado pela aplicação :
 
 ```text
 /sites/MLB/search
 ```
 
-passou a retornar:
+passou a retornar :
 
 ```text
 403 Forbidden
@@ -358,7 +367,7 @@ O núcleo do DealMind AI foi mantido **independente dessa integração**, permit
 
 ---
 
-## Persistência e histórico de preços
+## 💾 Persistência e Histórico de Preços
 
 O MVP utiliza **SQLite** para persistir os dados necessários ao monitoramento e aos alertas.
 
@@ -368,7 +377,7 @@ A camada de persistência foi separada das regras de negócio por meio de reposi
 
 A tabela `offer_history` armazena os snapshots capturados ao longo do tempo.
 
-Entre os principais dados registrados estão:
+Entre os principais dados registrados estão :
 
 - identificador do produto;
 - nome do produto;
@@ -378,7 +387,7 @@ Entre os principais dados registrados estão:
 - categoria;
 - data e hora da captura.
 
-A partir desse histórico, o DealMind AI consegue calcular:
+A partir desse histórico, o DealMind AI consegue calcular :
 
 - preço atual;
 - preço médio;
@@ -393,7 +402,7 @@ A partir desse histórico, o DealMind AI consegue calcular:
 
 A tabela `price_alerts` mantém os alertas configurados pelo usuário.
 
-Cada alerta pode armazenar:
+Cada alerta pode armazenar :
 
 - produto monitorado;
 - preço-alvo;
@@ -407,11 +416,11 @@ Se o preço atual for menor ou igual ao preço-alvo, o alerta é identificado co
 
 ---
 
-## Testes automatizados
+## 🧪 Testes Automatizados
 
 O DealMind AI possui testes automatizados desenvolvidos com **Pytest**, utilizados para validar componentes importantes da aplicação e reduzir o risco de regressões durante a evolução do projeto.
 
-Os testes cobrem funcionalidades relacionadas a:
+Os testes cobrem funcionalidades relacionadas a :
 
 - integração com marketplace;
 - camada de providers;
@@ -419,7 +428,7 @@ Os testes cobrem funcionalidades relacionadas a:
 - cálculo do Deal Score;
 - regras de análise de oportunidades.
 
-Para executar a suíte de testes localmente:
+Para executar a suíte de testes localmente :
 
 ```bash
 python -m pytest -q
@@ -435,7 +444,7 @@ A utilização de testes automatizados permite evoluir novas integrações e fun
 
 ---
 
-## Como executar localmente
+## 🚀 Como Executar Localmente
 
 ### 1. Clonar o repositório
 
@@ -470,7 +479,7 @@ pip install -r requirements.txt
 uvicorn app.api.main:app --reload --port 8000
 ```
 
-A documentação interativa da API ficará disponível em:
+A documentação interativa da API ficará disponível em :
 
 ```text
 http://127.0.0.1:8000/docs
@@ -478,7 +487,7 @@ http://127.0.0.1:8000/docs
 
 ### 6. Executar o frontend
 
-Em outro terminal, com o ambiente virtual ativado:
+Em outro terminal, com o ambiente virtual ativado :
 
 ```bash
 streamlit run frontend/streamlit_app.py
@@ -488,7 +497,7 @@ O Streamlit informará no terminal o endereço local utilizado pela aplicação.
 
 ### 7. Configuração da API utilizada pelo frontend
 
-Por padrão, o frontend utiliza:
+Por padrão, o frontend utiliza :
 
 ```text
 http://127.0.0.1:8000
@@ -504,19 +513,19 @@ para apontar o frontend para outra instância da API.
 
 ---
 
-## Deploy e demonstração pública
+## 🌐 Deploy e Demonstração Pública
 
 O DealMind AI possui backend e frontend publicados em ambientes separados, seguindo uma arquitetura simples de aplicação web.
 
 ### Frontend
 
-O frontend foi publicado no **Streamlit Community Cloud**:
+O frontend foi publicado no **Streamlit Community Cloud** :
 
 ```text
 https://dealmind-ai.streamlit.app
 ```
 
-A interface pública permite visualizar:
+A interface pública permite visualizar :
 
 - Dashboard de Price Intelligence;
 - histórico de preços;
@@ -528,7 +537,7 @@ A interface pública permite visualizar:
 
 ### Backend
 
-A API FastAPI está publicada no **Render**:
+A API FastAPI está publicada no **Render** :
 
 ```text
 https://dealmind-ai-9hme.onrender.com
@@ -536,15 +545,15 @@ https://dealmind-ai-9hme.onrender.com
 
 ### Swagger
 
-A documentação interativa da API está disponível em:
+A documentação interativa da API está disponível em :
 
 ```text
 https://dealmind-ai-9hme.onrender.com/docs
 ```
 
-### Integração frontend/backend
+### Integração Frontend/Backend
 
-No ambiente público, o frontend Streamlit utiliza a variável:
+No ambiente público, o frontend Streamlit utiliza a variável :
 
 ```text
 DEALMIND_API_URL
@@ -566,7 +575,12 @@ SQLite + Deal Score + Alerts
 
 ---
 
-## Status do MVP
+## ✅ Status do MVP
+
+![MVP](https://img.shields.io/badge/Stage-MVP-blue)
+![Tests](https://img.shields.io/badge/Tests-9%20passed-success)
+![Backend](https://img.shields.io/badge/Backend-Live-success)
+![Frontend](https://img.shields.io/badge/Frontend-Live-success)
 
 ### Implementado
 
@@ -603,7 +617,7 @@ SQLite + Deal Score + Alerts
 
 ---
 
-## Roadmap
+## 🗺️ Roadmap
 
 O desenvolvimento do DealMind AI está organizado em etapas incrementais, preservando a arquitetura modular construída no MVP.
 
@@ -642,13 +656,13 @@ O desenvolvimento do DealMind AI está organizado em etapas incrementais, preser
 
 ---
 
-## Objetivo de portfólio
+## 🎓 Objetivo de Portfólio
 
 O DealMind AI foi desenvolvido como um projeto de portfólio com foco na aplicação prática de **dados, inteligência artificial, engenharia de software e visão de negócio** em um problema real do e-commerce.
 
 Mais do que construir uma interface de busca, o projeto busca demonstrar como dados históricos de preços podem ser transformados em informações úteis para apoiar decisões de compra.
 
-O desenvolvimento do MVP demonstra competências em:
+O desenvolvimento do MVP demonstra competências em :
 
 - Data Science aplicada a problemas de negócio;
 - desenvolvimento backend com FastAPI;
@@ -669,7 +683,7 @@ O projeto também foi estruturado para evoluir gradualmente para recursos de **I
 
 ---
 
-## Autor
+## 👤 Autor
 
 **Marcus Corrêa Lopes Guedes**
 
