@@ -1,6 +1,6 @@
 # DealMind AI
 
-**Price Intelligence Copilot para monitoramento, análise e alertas de preços.**
+*Price Intelligence Copilot Para Monitoramento, Análise e Alertas de Preços.*
 
 O DealMind AI é um projeto de inteligência de preços desenvolvido para acompanhar produtos, registrar histórico de preços, avaliar oportunidades de compra e disparar alertas quando um preço-alvo é atingido.
 
