@@ -1,122 +1,221 @@
 import os
+
 import pandas as pd
 import requests
 import streamlit as st
 
 API_URL = os.getenv("DEALMIND_API_URL", "http://127.0.0.1:8000")
 
-st.set_page_config(page_title="DealMind AI", page_icon="🏃", layout="wide")
-st.title("🏃 DealMind AI")
-st.caption("Copilot de ofertas para corrida & fitness — MVP v0.2")
+st.set_page_config(page_title="DealMind AI", page_icon="📈", layout="wide")
 
-source_label = st.radio(
-    "Fonte de dados",
-    ["Demo local", "Mercado Livre API"],
-    horizontal=True,
+
+def api_get(path: str, params: dict | None = None):
+    try:
+        response = requests.get(f"{API_URL}{path}", params=params, timeout=20)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as exc:
+        st.error(f"Erro ao consultar a API: {exc}")
+        return None
+
+
+def api_post(path: str, payload: dict):
+    try:
+        response = requests.post(f"{API_URL}{path}", json=payload, timeout=20)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as exc:
+        st.error(f"Erro ao enviar dados para a API: {exc}")
+        return None
+
+
+def brl(value):
+    if value is None:
+        return "-"
+    return f"R$ {float(value):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def opportunity_label(value):
+    labels = {
+        "excellent": "🟢 Excelente",
+        "good": "🔵 Boa",
+        "fair": "🟡 Regular",
+        "weak": "🔴 Fraca",
+    }
+    return labels.get(value or "", value or "-")
+
+
+st.title("📈 DealMind AI")
+st.caption("Price Intelligence Copilot — monitoramento, histórico e alertas de preço")
+
+tab_dashboard, tab_monitor, tab_alerts, tab_search = st.tabs(
+    ["📊 Dashboard", "➕ Monitorar preço", "🔔 Alertas", "🔎 Busca / Providers"]
 )
-source = "demo" if source_label == "Demo local" else "mercado_livre"
 
-with st.form("search_form"):
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        query = st.text_input(
-            "O que você procura?",
-            placeholder="Ex.: tênis de corrida, relógio esportivo, fone para treino"
-        )
-    with col2:
-        max_price = st.number_input(
-            "Orçamento máximo (R$)", min_value=0.0, value=500.0, step=50.0
-        )
-    submitted = st.form_submit_button("Buscar ofertas", type="primary")
+with tab_dashboard:
+    st.subheader("Dashboard de Price Intelligence")
+    product_id = st.text_input("Produto monitorado", value="TENIS-001")
 
-if submitted:
-    if not query.strip():
-        st.warning("Digite o produto que deseja procurar.")
-    else:
-        try:
-            params = {"q": query, "source": source, "limit": 20}
-            if max_price > 0:
-                params["max_price"] = max_price
+    analysis = api_get(f"/monitoring/{product_id}") if product_id else None
+    history_data = api_get(f"/monitoring/{product_id}/history") if product_id else None
 
-            response = requests.get(
-                f"{API_URL}/products/search", params=params, timeout=20
-            )
+    if isinstance(analysis, dict) and analysis.get("product_id"):
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Preço atual", brl(analysis.get("current_price")))
+        c2.metric("Preço médio", brl(analysis.get("average_price")))
+        c3.metric("Melhor preço", brl(analysis.get("minimum_price")))
+        c4.metric("Deal Score", f"{analysis.get('deal_score', 0):.1f} / 100")
 
-            if response.status_code == 503:
-                st.warning(
-                    "A integração com Mercado Livre ainda não está configurada. "
-                    "Adicione MELI_ACCESS_TOKEN ao arquivo .env."
-                )
+        st.divider()
+        left, right = st.columns([2, 1])
+
+        with left:
+            st.markdown("### Evolução do preço")
+            if isinstance(history_data, dict) and history_data.get("history"):
+                df = pd.DataFrame(history_data["history"])
+                df["captured_at"] = pd.to_datetime(df["captured_at"], errors="coerce")
+                df = df.dropna(subset=["captured_at"]).sort_values("captured_at")
+                chart_df = df.set_index("captured_at")[["price"]]
+                st.line_chart(chart_df, use_container_width=True)
+
+                table = df[["captured_at", "price", "original_price"]].copy()
+                table["captured_at"] = table["captured_at"].dt.strftime("%d/%m/%Y %H:%M")
+                table["price"] = table["price"].apply(brl)
+                table["original_price"] = table["original_price"].apply(brl)
+                table.columns = ["Capturado em", "Preço", "Preço original"]
+                st.dataframe(table, use_container_width=True, hide_index=True)
+
+        with right:
+            st.markdown("### Oportunidade")
+            st.metric("Classificação", opportunity_label(analysis.get("opportunity")))
+            variation = float(analysis.get("variation_vs_average_percent", 0))
+            if variation < 0:
+                st.success(f"O preço atual está {abs(variation):.2f}% abaixo da média.")
+            elif variation > 0:
+                st.warning(f"O preço atual está {variation:.2f}% acima da média.")
             else:
-                response.raise_for_status()
-                data = response.json()
-                products = data["products"]
-                st.session_state["products"] = products
-                if not products:
-                    st.info("Nenhuma oferta encontrada para esses critérios.")
-        except requests.RequestException as exc:
-            st.error(f"Erro ao consultar a API do DealMind: {exc}")
+                st.info("O preço atual está igual à média observada.")
 
-products = st.session_state.get("products", [])
+            st.write(f"**Observações:** {analysis.get('observations', 0)}")
+            st.write(f"**Preço máximo:** {brl(analysis.get('maximum_price'))}")
+            if analysis.get("url"):
+                st.link_button("Abrir produto", analysis["url"], use_container_width=True)
 
-if products:
-    st.subheader("Ofertas encontradas")
-    rows = [{
-        "Produto": item["name"],
-        "Loja": item.get("store", "Mercado Livre"),
-        "Preço": f"R$ {item['price']:,.2f}",
-        "Desconto": f"{item.get('discount_percent', 0):.1f}%",
-        "Deal Score": f"{item.get('deal_score', 0):.1f}/100",
-    } for item in products]
+with tab_monitor:
+    st.subheader("Registrar nova observação de preço")
 
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    with st.form("snapshot_form"):
+        c1, c2 = st.columns(2)
+        with c1:
+            snapshot_product_id = st.text_input("Product ID", value="TENIS-001")
+            snapshot_title = st.text_input("Nome do produto", value="Tênis de Corrida Demo")
+            snapshot_price = st.number_input("Preço atual", min_value=0.01, value=299.90, step=10.0)
+        with c2:
+            snapshot_original_price = st.number_input("Preço original", min_value=0.01, value=449.90, step=10.0)
+            snapshot_url = st.text_input("URL do produto", value="https://example.com/tenis-001")
+            snapshot_category = st.text_input("Categoria", value="running")
 
-    best = products[0]
-    st.success(
-        f"Melhor oportunidade encontrada: **{best['name']}** "
-        f"por **R$ {best['price']:,.2f}** — "
-        f"Deal Score **{best.get('deal_score', 0)}/100**."
-    )
+        submitted = st.form_submit_button("Registrar preço", type="primary")
 
-    if best.get("url"):
-        st.link_button("Ver oferta", best["url"])
+    if submitted:
+        result = api_post(
+            "/monitoring/snapshots",
+            {
+                "product_id": snapshot_product_id,
+                "title": snapshot_title,
+                "price": snapshot_price,
+                "original_price": snapshot_original_price,
+                "url": snapshot_url,
+                "category_id": snapshot_category or None,
+            },
+        )
+        if result:
+            st.success("Preço registrado com sucesso.")
+            analysis = result.get("analysis", {})
+            triggered = result.get("triggered_alerts", [])
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Deal Score", f"{analysis.get('deal_score', 0):.1f}/100")
+            c2.metric("Preço médio", brl(analysis.get("average_price")))
+            c3.metric("Observações", analysis.get("observations", 0))
+            if triggered:
+                st.error("🚨 Alerta de preço disparado!")
+                for alert in triggered:
+                    st.write(
+                        f"Meta: **{brl(alert['target_price'])}** → "
+                        f"preço atual: **{brl(alert['current_price'])}**"
+                    )
+            else:
+                st.info("Nenhum alerta foi disparado nesta captura.")
+
+with tab_alerts:
+    st.subheader("Alertas de preço")
+
+    with st.form("alert_form"):
+        alert_product = st.text_input("Product ID", value="TENIS-001", key="alert_product")
+        target_price = st.number_input("Preço-alvo", min_value=0.01, value=320.00, step=10.0)
+        contact = st.text_input("Contato", value="teste@dealmind.ai")
+        submit_alert = st.form_submit_button("Criar alerta", type="primary")
+
+    if submit_alert:
+        alert = api_post(
+            "/alerts",
+            {
+                "product_id": alert_product,
+                "target_price": target_price,
+                "contact": contact or None,
+            },
+        )
+        if alert:
+            st.success(f"Alerta #{alert['id']} criado para {brl(alert['target_price'])}.")
 
     st.divider()
-    st.subheader("🔔 Criar alerta de preço")
+    alerts = api_get("/alerts")
+    if isinstance(alerts, list) and alerts:
+        df_alerts = pd.DataFrame(alerts)
+        df_alerts["target_price"] = df_alerts["target_price"].apply(brl)
+        df_alerts["Status"] = df_alerts["active"].apply(
+            lambda value: "🟢 Ativo" if value else "✅ Disparado"
+        )
+        st.dataframe(
+            df_alerts.rename(
+                columns={
+                    "id": "ID",
+                    "product_id": "Produto",
+                    "target_price": "Preço-alvo",
+                    "contact": "Contato",
+                    "created_at": "Criado em",
+                }
+            ),
+            use_container_width=True,
+            hide_index=True,
+        )
 
-    product_options = {
-        f"{item['name']} — R$ {item['price']:,.2f}": item for item in products
-    }
-    selected_label = st.selectbox("Produto", list(product_options.keys()))
-    selected = product_options[selected_label]
+with tab_search:
+    st.subheader("Providers e busca")
+    providers = api_get("/providers")
+    if isinstance(providers, dict) and providers.get("providers"):
+        st.dataframe(pd.DataFrame(providers["providers"]), use_container_width=True, hide_index=True)
 
-    target_price = st.number_input(
-        "Preço-alvo",
-        min_value=1.0,
-        value=max(1.0, round(selected["price"] * 0.9, 2)),
-        step=10.0,
+    st.info(
+        "A busca genérica do Mercado Livre segue limitada pelo endpoint atual. "
+        "A arquitetura de providers foi mantida para permitir novas fontes."
     )
 
-    contact = st.text_input(
-        "Telegram",
-        placeholder="@seu_usuario — integração será ativada na v0.3"
-    )
+    with st.form("search_form"):
+        q = st.text_input("Busca", placeholder="Ex.: tênis corrida")
+        max_price = st.number_input("Preço máximo", min_value=0.0, value=500.0, step=50.0)
+        source = st.selectbox("Provider", ["demo", "mercado_livre"])
+        limit = st.slider("Limite", 1, 20, 10)
+        do_search = st.form_submit_button("Buscar")
 
-    if st.button("Criar alerta"):
-        try:
-            response = requests.post(
-                f"{API_URL}/alerts",
-                json={
-                    "product_id": selected["id"],
-                    "target_price": target_price,
-                    "contact": contact or None,
-                },
-                timeout=10,
-            )
-            response.raise_for_status()
-            alert = response.json()
-            st.success(
-                f"Alerta #{alert['id']} registrado para R$ {alert['target_price']:,.2f}."
-            )
-        except requests.RequestException:
-            st.error("Não foi possível registrar o alerta.")
+    if do_search and q:
+        params = {"q": q, "source": source, "limit": limit}
+        if max_price > 0:
+            params["max_price"] = max_price
+        result = api_get("/products/search", params=params)
+        if isinstance(result, dict):
+            products = result.get("products", [])
+            if products:
+                st.dataframe(pd.DataFrame(products), use_container_width=True, hide_index=True)
+            else:
+                st.info("Nenhum produto retornado por este provider.")
