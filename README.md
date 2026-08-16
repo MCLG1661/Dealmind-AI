@@ -1,4 +1,4 @@
-# <img width="350" height="125" alt="ChatGPT Image 15 de ago  de 2026, 10_54_36" src="https://github.com/user-attachments/assets/3ee4b33b-994a-4cea-a260-be010b695356" /> DealMind AI
+# <img width="500" height="250" alt="ChatGPT Image 15 de ago  de 2026, 10_54_36" src="https://github.com/user-attachments/assets/3ee4b33b-994a-4cea-a260-be010b695356" /> DealMind AI
 
 ![Python](https://img.shields.io/badge/Python-3.14-blue?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white)
