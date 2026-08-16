@@ -45,8 +45,14 @@ def opportunity_label(value):
     return labels.get(value or "", value or "-")
 
 
-st.title("📈 DealMind AI")
-st.caption("Price Intelligence Copilot — monitoramento, histórico e alertas de preço")
+st.image(
+    "assets/dealmind-logo-horizontal.png",
+    width=420,
+)
+
+st.caption(
+    "Price Intelligence Copilot — monitoramento, histórico, alertas e recomendações de preço"
+)
 
 tab_dashboard, tab_monitor, tab_alerts, tab_search, tab_advisor = st.tabs(
     [
