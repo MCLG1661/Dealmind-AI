@@ -91,6 +91,12 @@ Exemplo de cenário utilizado na demonstração :
 | Deal Score | 88,9 / 100 |
 | Classificação | Excellent |
 
+### Visão do Dashboard
+
+O dashboard consolida os principais indicadores de Price Intelligence do produto monitorado, incluindo preço atual, média histórica, melhor preço, Deal Score, evolução do preço e classificação da oportunidade.
+
+![Dashboard de Price Intelligence do DealMind AI](assets/screenshots/dashboard-price-intelligence.png)
+
 ---
 
 ## 🧠 Deal Score
@@ -127,6 +133,13 @@ Preço atual: R$ 299,90
 R$ 299,90 <= R$ 320,00
 Disparado
 ```
+
+### Gestão de alertas
+
+A interface permite configurar preços-alvo para produtos monitorados e acompanhar o status dos alertas. Quando uma nova observação atinge o valor definido, o sistema identifica automaticamente a condição e registra o alerta como disparado.
+
+![Alertas de preço do DealMind AI](assets/screenshots/price-alerts.png)
+
 ---
 
 ## 🏗️ Arquitetura
@@ -364,6 +377,12 @@ passou a retornar :
 Por esse motivo, o Mercado Livre permanece implementado como provider, mas a disponibilidade da busca depende das políticas e permissões da API externa.
 
 O núcleo do DealMind AI foi mantido **independente dessa integração**, permitindo que o sistema de monitoramento, histórico, Deal Score e alertas continue funcionando e que novos providers sejam adicionados futuramente.
+
+### Providers disponíveis
+
+A arquitetura de providers desacopla o núcleo de Price Intelligence das fontes externas de dados. O `DemoProvider` permite demonstrar e testar o fluxo completo da aplicação, enquanto a integração com o Mercado Livre permanece preparada para evolução conforme as políticas e endpoints disponibilizados pela plataforma.
+
+![Providers e busca do DealMind AI](assets/screenshots/providers.png)
 
 ---
 
