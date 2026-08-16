@@ -103,6 +103,7 @@ Exemplo:
 Deal Score: 88.9 / 100
 Classificação: Excellent
 Preço atual: 12,63% abaixo da média
+```
 
 ## Alertas de preço
 
@@ -116,7 +117,7 @@ Preço-alvo: R$ 320,00
 Preço atual: R$ 299,90
 R$ 299,90 <= R$ 320,00
 Disparado
-
+```
 ---
 
 ## Arquitetura
