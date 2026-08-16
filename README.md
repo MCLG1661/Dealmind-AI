@@ -1,4 +1,4 @@
-# <img width="700" height="350" alt="ChatGPT Image 16 de ago  de 2026, 20_20_21" src="https://github.com/user-attachments/assets/d4bb7059-efc3-4243-8e13-6762fffab6b3" />
+# <img width="600" height="300" alt="ChatGPT Image 16 de ago  de 2026, 20_20_21" src="https://github.com/user-attachments/assets/d4bb7059-efc3-4243-8e13-6762fffab6b3" />
 
 ![Python](https://img.shields.io/badge/Python-3.14-blue?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white)
