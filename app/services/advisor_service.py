@@ -31,6 +31,16 @@ def _recommendation_label(value: str) -> str:
     return labels[value]
 
 
+def _format_brl(value: float) -> str:
+    formatted = f"{value:,.2f}"
+    return (
+        formatted
+        .replace(",", "X")
+        .replace(".", ",")
+        .replace("X", ".")
+    )
+
+
 def build_advisor_response(product_id: str) -> dict:
     analysis = build_price_analysis(product_id)
 
@@ -38,7 +48,7 @@ def build_advisor_response(product_id: str) -> dict:
         return {
             "product_id": product_id,
             "available": False,
-            "message": "No price history available for advisor analysis.",
+            "message": "Não há histórico de preços disponível para análise.",
         }
 
     current_price = float(analysis["current_price"])
@@ -56,41 +66,61 @@ def build_advisor_response(product_id: str) -> dict:
 
     if variation < 0:
         reasons.append(
-            f"Current price is {abs(variation):.2f}% below the observed average."
+            f"O preço atual está {abs(variation):.2f}% abaixo da média observada."
         )
     elif variation > 0:
         reasons.append(
-            f"Current price is {variation:.2f}% above the observed average."
+            f"O preço atual está {variation:.2f}% acima da média observada."
         )
     else:
-        reasons.append("Current price is equal to the observed average.")
+        reasons.append(
+            "O preço atual está igual à média observada."
+        )
 
     if current_price <= minimum_price:
-        reasons.append("Current price is at the lowest observed level.")
+        reasons.append(
+            "O preço atual está no menor nível observado no histórico."
+        )
     elif minimum_price > 0:
         distance_from_minimum = (
             (current_price - minimum_price) / minimum_price
         ) * 100
+
         reasons.append(
-            f"Current price is {distance_from_minimum:.2f}% above "
-            "the historical minimum."
+            f"O preço atual está {distance_from_minimum:.2f}% acima "
+            "do menor preço histórico."
         )
 
+    opportunity_labels = {
+        "excellent": "excelente",
+        "good": "boa",
+        "fair": "regular",
+        "weak": "fraca",
+    }
+
+    opportunity_label = opportunity_labels.get(
+        analysis["opportunity"],
+        analysis["opportunity"],
+    )
+
     reasons.append(
-        f"Deal Score is {deal_score:.1f}/100, classified as "
-        f"{analysis['opportunity']}."
+        f"O Deal Score é {deal_score:.1f}/100, indicando uma "
+        f"oportunidade {opportunity_label}."
     )
 
     if observations < 5:
         reasons.append(
-            "The recommendation is based on a limited price history, "
-            "so confidence is still low."
+            "A recomendação é baseada em um histórico de preços ainda limitado, "
+            "por isso a confiança da análise permanece baixa."
         )
+
+    current_price_br = _format_brl(current_price)
+    average_price_br = _format_brl(average_price)
 
     summary = (
         f"{_recommendation_label(recommendation)} — "
-        f"current price R$ {current_price:.2f}, "
-        f"average R$ {average_price:.2f}, "
+        f"preço atual R$ {current_price_br}, "
+        f"média histórica R$ {average_price_br} e "
         f"Deal Score {deal_score:.1f}/100."
     )
 
@@ -114,7 +144,7 @@ def build_advisor_response(product_id: str) -> dict:
             "observations": observations,
         },
         "disclaimer": (
-            "Recommendation is based only on the price history available "
-            "inside DealMind AI."
+            "A recomendação é baseada exclusivamente no histórico de preços "
+            "disponível no DealMind AI."
         ),
     }

@@ -48,8 +48,14 @@ def opportunity_label(value):
 st.title("📈 DealMind AI")
 st.caption("Price Intelligence Copilot — monitoramento, histórico e alertas de preço")
 
-tab_dashboard, tab_monitor, tab_alerts, tab_search = st.tabs(
-    ["📊 Dashboard", "➕ Monitorar preço", "🔔 Alertas", "🔎 Busca / Providers"]
+tab_dashboard, tab_monitor, tab_alerts, tab_search, tab_advisor = st.tabs(
+    [
+        "📊 Dashboard",
+        "➕ Monitorar preço",
+        "🔔 Alertas",
+        "🔎 Busca / Providers",
+        "🧠 AI Advisor",
+    ]
 )
 
 with tab_dashboard:
@@ -219,3 +225,109 @@ with tab_search:
                 st.dataframe(pd.DataFrame(products), use_container_width=True, hide_index=True)
             else:
                 st.info("Nenhum produto retornado por este provider.")
+
+with tab_advisor:
+    st.subheader("🧠 DealMind AI Advisor")
+    st.caption(
+        "Recomendação de compra baseada no histórico de preços, Deal Score "
+        "e comportamento observado do produto."
+    )
+
+    advisor_product_id = st.text_input(
+        "Produto para análise",
+        value="TENIS-001",
+        key="advisor_product_id",
+    )
+
+    if advisor_product_id:
+        advisor = api_get(f"/advisor/{advisor_product_id}")
+
+        if isinstance(advisor, dict) and advisor.get("available"):
+            recommendation = advisor.get("recommendation_label", "-")
+            confidence = advisor.get("confidence", "-")
+            summary = advisor.get("summary", "")
+            reasons = advisor.get("reasons", [])
+            metrics = advisor.get("metrics", {})
+
+            st.divider()
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                if recommendation == "COMPRAR":
+                    st.success(f"### 🟢 {recommendation}")
+                elif recommendation == "CONSIDERAR COMPRA":
+                    st.info(f"### 🔵 {recommendation}")
+                elif recommendation == "ACOMPANHAR":
+                    st.warning(f"### 🟡 {recommendation}")
+                else:
+                    st.error(f"### 🔴 {recommendation}")
+
+            with col2:
+                confidence_labels = {
+                    "high": "Alta",
+                    "medium": "Média",
+                    "low": "Baixa",
+                }
+                st.metric(
+                    "Confiança da análise",
+                    confidence_labels.get(confidence, confidence),
+                )
+
+            with col3:
+                st.metric(
+                    "Deal Score",
+                    f"{metrics.get('deal_score', 0):.1f} / 100",
+                )
+
+            st.markdown("### Resumo da recomendação")
+            st.info(summary)
+
+            st.markdown("### Por que o DealMind chegou a essa conclusão?")
+
+            for reason in reasons:
+                st.write(f"✓ {reason}")
+
+            st.divider()
+
+            st.markdown("### Métricas utilizadas")
+
+            m1, m2, m3, m4 = st.columns(4)
+
+            m1.metric(
+                "Preço atual",
+                brl(metrics.get("current_price")),
+            )
+            m2.metric(
+                "Preço médio",
+                brl(metrics.get("average_price")),
+            )
+            m3.metric(
+                "Menor preço",
+                brl(metrics.get("minimum_price")),
+            )
+            m4.metric(
+                "Observações",
+                metrics.get("observations", 0),
+            )
+
+            variation = float(
+                metrics.get("variation_vs_average_percent", 0)
+            )
+
+            if variation < 0:
+                st.success(
+                    f"O preço atual está {abs(variation):.2f}% abaixo da média observada."
+                )
+            elif variation > 0:
+                st.warning(
+                    f"O preço atual está {variation:.2f}% acima da média observada."
+                )
+            else:
+                st.info("O preço atual está igual à média observada.")
+
+            st.caption(
+                "A recomendação é baseada exclusivamente no histórico de preços "
+                "disponível no DealMind AI. Quanto maior o histórico, maior pode "
+                "ser a confiança da análise."
+            )                
