@@ -1,3 +1,4 @@
+from urllib.parse import urlencode
 import os
 import requests
 
@@ -119,6 +120,34 @@ def alerts_create(payload: AlertCreate) -> dict:
 @app.get("/alerts")
 def alerts_list() -> list[dict]:
     return list_alerts()
+
+@app.get("/auth/mercadolivre")
+def mercado_livre_authorize() -> dict:
+    client_id = os.getenv("MELI_CLIENT_ID")
+    redirect_uri = os.getenv("MELI_REDIRECT_URI")
+
+    if not client_id or not redirect_uri:
+        return {
+            "success": False,
+            "message": "OAuth environment variables are not configured.",
+        }
+
+    params = urlencode(
+        {
+            "response_type": "code",
+            "client_id": client_id,
+            "redirect_uri": redirect_uri,
+        }
+    )
+
+    authorization_url = (
+        f"https://auth.mercadolivre.com.br/authorization?{params}"
+    )
+
+    return {
+        "success": True,
+        "authorization_url": authorization_url,
+    }
 
 
 @app.get("/callback/mercadolivre")

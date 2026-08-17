@@ -48,6 +48,29 @@ class MercadoLivreClient:
             "User-Agent": "DealMindAI/0.2",
         }
 
+def get_current_user(self) -> dict[str, Any]:
+    response = self.session.get(
+        f"{self.BASE_URL}/users/me",
+        headers=self.headers,
+        timeout=self.timeout,
+    )
+
+    if response.status_code in (401, 403):
+        raise MercadoLivreError(
+            f"Mercado Livre API returned HTTP {response.status_code}: "
+            f"{response.text}"
+        )
+
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as exc:
+        raise MercadoLivreError(
+            f"Mercado Livre API returned HTTP {response.status_code}: "
+            f"{response.text}"
+        ) from exc
+
+    return response.json()
+
     def search(
         self,
         query: str,
