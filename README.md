@@ -6,7 +6,7 @@
 ![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?logo=sqlite&logoColor=white)
 ![Pytest](https://img.shields.io/badge/Pytest-9%20tests-success?logo=pytest)
 ![Render](https://img.shields.io/badge/Render-API%20Live-46E3B7?logo=render&logoColor=black)
-![Streamlit Cloud](https://img.shields.io/badge/Streamlit%20Cloud-App%20Live-FF4B4B?logo=streamlit&logoColor=white)
+![Streamlit Cloud](https://img.shields.io/badge/Streamlit%20Cloud-App%20Live-FF4B4B?logo=streamlit&logoColor=white) 
 ![Status](https://img.shields.io/badge/MVP-Functional-success)
 
 *Price Intelligence Copilot Para Monitoramento, Análise e Alertas de Preços e Recomendações.*
