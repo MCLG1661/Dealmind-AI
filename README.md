@@ -9,7 +9,7 @@
 ![Streamlit Cloud](https://img.shields.io/badge/Streamlit%20Cloud-App%20Live-FF4B4B?logo=streamlit&logoColor=white)
 ![Status](https://img.shields.io/badge/MVP-Functional-success)
 
-*Price Intelligence Copilot Para Monitoramento, Análise e Alertas de Preços.*
+*Price Intelligence Copilot Para Monitoramento, Análise e Alertas de Preços e Recomendações.*
 
 O DealMind AI é um projeto de inteligência de preços desenvolvido para acompanhar produtos, registrar histórico de preços, avaliar oportunidades de compra e disparar alertas quando um preço-alvo é atingido.
 
