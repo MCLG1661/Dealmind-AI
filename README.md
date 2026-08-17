@@ -88,7 +88,7 @@ Exemplo de cenário utilizado na demonstração :
 | Preço atual | R$ 299,90 |
 | Preço médio | R$ 343,23 |
 | Variação vs. média | -12,63% |
-| Deal Score | 88,9 / 100 |
+| Deal Score | 88,9 / 100 | 
 | Classificação | Excellent |
 
 ### Visão do Dashboard
