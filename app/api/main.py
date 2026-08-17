@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from app.api.advisor_routes import router as advisor_router
 from app.api.monitoring_routes import router as monitoring_router
 from app.database.db import init_db
+from app.integrations.mercado_livre import MercadoLivreClient, MercadoLivreError
 from app.providers.mercado_livre_provider import MercadoLivreProviderError
 from app.repositories.alert_repository import create_alert, list_alerts
 from app.repositories.offer_repository import get_price_history
@@ -16,8 +17,7 @@ from app.services.provider_service import (
     list_providers,
     search_offers,
 )
-from app.services.token_store import save_tokens, token_status
-
+from app.services.token_store import get_access_token, save_tokens, token_status
 
 app = FastAPI(
     title="DealMind AI API",
@@ -120,6 +120,39 @@ def alerts_create(payload: AlertCreate) -> dict:
 @app.get("/alerts")
 def alerts_list() -> list[dict]:
     return list_alerts()
+
+@app.get("/auth/me")
+def mercado_livre_current_user() -> dict:
+    access_token = get_access_token()
+
+    if not access_token:
+        return {
+            "authenticated": False,
+            "message": "Mercado Livre access token is not available.",
+        }
+
+    try:
+        client = MercadoLivreClient(
+            access_token=access_token,
+            site_id="MLB",
+        )
+
+        user = client.get_current_user()
+
+        return {
+            "authenticated": True,
+            "user_id": user.get("id"),
+            "nickname": user.get("nickname"),
+            "site_id": user.get("site_id"),
+            "country_id": user.get("country_id"),
+        }
+
+    except MercadoLivreError as exc:
+        return {
+            "authenticated": True,
+            "success": False,
+            "error": str(exc),
+        }
 
 @app.get("/auth/mercadolivre")
 def mercado_livre_authorize() -> dict:
