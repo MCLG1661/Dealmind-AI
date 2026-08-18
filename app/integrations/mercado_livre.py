@@ -35,6 +35,7 @@ class MercadoLivreClient:
     ) -> None:
         if not access_token:
             raise ValueError("Mercado Livre access token is required.")
+
         self.access_token = access_token
         self.site_id = site_id
         self.session = session or requests.Session()
@@ -48,28 +49,28 @@ class MercadoLivreClient:
             "User-Agent": "DealMindAI/0.2",
         }
 
-def get_current_user(self) -> dict[str, Any]:
-    response = self.session.get(
-        f"{self.BASE_URL}/users/me",
-        headers=self.headers,
-        timeout=self.timeout,
-    )
-
-    if response.status_code in (401, 403):
-        raise MercadoLivreError(
-            f"Mercado Livre API returned HTTP {response.status_code}: "
-            f"{response.text}"
+    def get_current_user(self) -> dict[str, Any]:
+        response = self.session.get(
+            f"{self.BASE_URL}/users/me",
+            headers=self.headers,
+            timeout=self.timeout,
         )
 
-    try:
-        response.raise_for_status()
-    except requests.HTTPError as exc:
-        raise MercadoLivreError(
-            f"Mercado Livre API returned HTTP {response.status_code}: "
-            f"{response.text}"
-        ) from exc
+        if response.status_code in (401, 403):
+            raise MercadoLivreError(
+                f"Mercado Livre API returned HTTP {response.status_code}: "
+                f"{response.text}"
+            )
 
-    return response.json()
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as exc:
+            raise MercadoLivreError(
+                f"Mercado Livre API returned HTTP {response.status_code}: "
+                f"{response.text}"
+            ) from exc
+
+        return response.json()
 
     def search(
         self,
@@ -112,6 +113,7 @@ def get_current_user(self) -> dict[str, Any]:
                 continue
 
             price = float(price)
+
             if max_price is not None and price > max_price:
                 continue
 
