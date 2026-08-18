@@ -151,6 +151,15 @@ def mercado_livre_current_user() -> dict:
         return {
             "authenticated": True,
             "success": False,
+            "error_type": "MercadoLivreError",
+            "error": str(exc),
+        }
+
+    except Exception as exc:
+        return {
+            "authenticated": True,
+            "success": False,
+            "error_type": type(exc).__name__,
             "error": str(exc),
         }
 
