@@ -203,34 +203,202 @@ with tab_alerts:
         )
 
 with tab_search:
-    st.subheader("Providers e busca")
+    st.subheader("🔎 Busca Inteligente de Ofertas")
+
+    st.caption(
+        "Pesquise produtos reais, compare preços e use o Deal Score "
+        "para identificar as oportunidades mais interessantes."
+    )
+
     providers = api_get("/providers")
+
     if isinstance(providers, dict) and providers.get("providers"):
-        st.dataframe(pd.DataFrame(providers["providers"]), use_container_width=True, hide_index=True)
+        provider_df = pd.DataFrame(providers["providers"])
+
+        st.markdown("### Providers disponíveis")
+
+        st.dataframe(
+            provider_df,
+            use_container_width=True,
+            hide_index=True,
+        )
 
     st.info(
-        "A busca genérica do Mercado Livre segue limitada pelo endpoint atual. "
-        "A arquitetura de providers foi mantida para permitir novas fontes."
+        "A busca principal utiliza o provider Serper / Google Shopping. "
+        "O Mercado Livre permanece integrado para recursos autenticados."
     )
 
     with st.form("search_form"):
-        q = st.text_input("Busca", placeholder="Ex.: tênis corrida")
-        max_price = st.number_input("Preço máximo", min_value=0.0, value=500.0, step=50.0)
-        source = st.selectbox("Provider", ["demo", "mercado_livre"])
-        limit = st.slider("Limite", 1, 20, 10)
-        do_search = st.form_submit_button("Buscar")
+        c1, c2 = st.columns([2, 1])
+
+        with c1:
+            q = st.text_input(
+                "O que você está procurando?",
+                placeholder="Ex.: tênis de corrida",
+            )
+
+        with c2:
+            max_price = st.number_input(
+                "Preço máximo",
+                min_value=0.0,
+                value=500.0,
+                step=50.0,
+            )
+
+        c3, c4 = st.columns(2)
+
+        with c3:
+            source = st.selectbox(
+                "Provider",
+                ["serper", "demo", "mercado_livre"],
+                index=0,
+            )
+
+        with c4:
+            limit = st.slider(
+                "Quantidade de resultados",
+                min_value=1,
+                max_value=20,
+                value=10,
+            )
+
+        do_search = st.form_submit_button(
+            "🔎 Buscar ofertas",
+            type="primary",
+            use_container_width=True,
+        )
 
     if do_search and q:
-        params = {"q": q, "source": source, "limit": limit}
+        params = {
+            "q": q,
+            "source": source,
+            "limit": limit,
+        }
+
         if max_price > 0:
             params["max_price"] = max_price
-        result = api_get("/products/search", params=params)
+
+        with st.spinner("Buscando e analisando ofertas..."):
+            result = api_get(
+                "/products/search",
+                params=params,
+            )
+
         if isinstance(result, dict):
             products = result.get("products", [])
+
             if products:
-                st.dataframe(pd.DataFrame(products), use_container_width=True, hide_index=True)
+                st.success(
+                    f"{len(products)} ofertas encontradas para **{q}**."
+                )
+
+                st.markdown("### 🧠 Ranking DealMind")
+
+                for index, product in enumerate(products, start=1):
+                    score = float(product.get("deal_score", 0))
+                    rating = product.get("rating")
+                    rating_count = product.get("rating_count")
+                    historical_average = product.get("historical_average")
+
+                    if score >= 75:
+                        score_label = "🟢 Excelente oportunidade"
+                    elif score >= 60:
+                        score_label = "🔵 Boa oportunidade"
+                    elif score >= 50:
+                        score_label = "🟡 Oportunidade regular"
+                    else:
+                        score_label = "🔴 Pouco atrativa"
+
+                    with st.container(border=True):
+                        image_col, info_col, score_col = st.columns(
+                            [1, 3, 1.2]
+                        )
+
+                        with image_col:
+                            thumbnail = product.get("thumbnail")
+
+                            if thumbnail:
+                                st.image(
+                                    thumbnail,
+                                    use_container_width=True,
+                                )
+                            else:
+                                st.write("🛍️")
+
+                        with info_col:
+                            st.markdown(
+                                f"### {index}. {product.get('name', 'Produto')}"
+                            )
+
+                            st.write(
+                                f"**Loja:** {product.get('store', '-')}"
+                            )
+
+                            st.markdown(
+                                f"## {brl(product.get('price'))}"
+                            )
+
+                            if rating is not None:
+                                rating_text = f"⭐ {float(rating):.1f}"
+
+                                if rating_count:
+                                    rating_text += (
+                                        f" · {int(rating_count)} avaliações"
+                                    )
+
+                                st.write(rating_text)
+
+                            if historical_average is not None:
+                                st.write(
+                                    "**Média histórica:** "
+                                    f"{brl(historical_average)}"
+                                )
+                            else:
+                                st.caption(
+                                    "Histórico sendo construído pelo DealMind."
+                                )
+
+                            product_url = product.get("url")
+
+                            if product_url:
+                                st.link_button(
+                                    "🛒 Ver oferta",
+                                    product_url,
+                                )
+
+                        with score_col:
+                            st.metric(
+                                "Deal Score",
+                                f"{score:.1f}/100",
+                            )
+
+                            st.write(score_label)
+
+                            discount = float(
+                                product.get(
+                                    "discount_percent",
+                                    0,
+                                )
+                                or 0
+                            )
+
+                            if discount > 0:
+                                st.success(
+                                    f"{discount:.1f}% de desconto"
+                                )
+
+                st.divider()
+
+                st.caption(
+                    "O Deal Score considera competitividade de preço, "
+                    "avaliações, volume de reviews, descontos disponíveis "
+                    "e histórico observado pelo DealMind."
+                )
+
             else:
-                st.info("Nenhum produto retornado por este provider.")
+                st.info(
+                    "Nenhuma oferta encontrada com os filtros informados."
+                )
 
 with tab_advisor:
     st.subheader("🧠 DealMind AI Advisor")
