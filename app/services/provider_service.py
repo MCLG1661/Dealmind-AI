@@ -1,6 +1,7 @@
 from app.providers.base import ProductSearchProvider
 from app.providers.demo_provider import DemoProvider
 from app.providers.mercado_livre_provider import MercadoLivreProvider
+from app.providers.serper_provider import SerperProvider
 
 
 class UnknownProviderError(ValueError):
@@ -10,6 +11,7 @@ class UnknownProviderError(ValueError):
 _PROVIDERS: dict[str, ProductSearchProvider] = {
     "demo": DemoProvider(),
     "mercado_livre": MercadoLivreProvider(),
+    "serper": SerperProvider(),
 }
 
 
