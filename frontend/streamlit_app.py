@@ -320,15 +320,6 @@ if "last_search" not in st.session_state:
 if "selected_product" not in st.session_state:
     st.session_state.selected_product = None
 
-if "watch_product_id" not in st.session_state:
-    st.session_state.watch_product_id = "TENIS-001"
-
-if "alert_product" not in st.session_state:
-    st.session_state.alert_product = "TENIS-001"
-
-if "advisor_product_id" not in st.session_state:
-    st.session_state.advisor_product_id = "TENIS-001"
-
 
 logo_col, hero_col = st.columns([1.55, 4])
 
@@ -603,10 +594,6 @@ with tab_discover:
                                     use_container_width=True,
                                 ):
                                     st.session_state.selected_product = product
-                                    selected_id = str(product.get("id"))
-                                    st.session_state.watch_product_id = selected_id
-                                    st.session_state.alert_product = selected_id
-                                    st.session_state.advisor_product_id = selected_id
 
                                     snapshot_payload = {
                                         "product_id": str(product.get("id")),
@@ -705,31 +692,118 @@ with tab_watch:
     st.markdown(
         """
         <div class="dm-section">
-            <div class="dm-section-title">Histórico e inteligência de preço</div>
+            <div class="dm-section-title">Produtos monitorados</div>
             <div class="dm-muted">
-                Consulte um produto acompanhado e veja sua evolução ao longo do tempo.
+                Acompanhe sua carteira de produtos e abra a análise completa sem precisar digitar Product ID.
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    product_id = st.text_input(
-        "Product ID",
-        key="watch_product_id",
+    portfolio = api_get("/monitoring/products", silent=True)
+    monitored_products = (
+        portfolio.get("products", [])
+        if isinstance(portfolio, dict)
+        else []
     )
 
-    if product_id:
+    if monitored_products:
+        total_observations = sum(
+            int(item.get("observations") or 0)
+            for item in monitored_products
+        )
+        best_prices = [
+            float(item["best_price"])
+            for item in monitored_products
+            if item.get("best_price") is not None
+        ]
+
+        k1, k2, k3 = st.columns(3)
+        k1.metric("Produtos monitorados", len(monitored_products))
+        k2.metric("Observações acumuladas", total_observations)
+        k3.metric(
+            "Melhor preço da carteira",
+            brl(min(best_prices) if best_prices else None),
+        )
+
+        st.markdown("### Sua carteira")
+
+        for start in range(0, len(monitored_products), 3):
+            cols = st.columns(3)
+            for offset, col in enumerate(cols):
+                idx = start + offset
+                if idx >= len(monitored_products):
+                    continue
+
+                item = monitored_products[idx]
+
+                with col:
+                    with st.container(border=True):
+                        st.markdown(
+                            f'<div class="dm-product-title">{item.get("title", "Produto monitorado")}</div>',
+                            unsafe_allow_html=True,
+                        )
+                        st.caption(f"ID: {item.get('external_id', '—')}")
+
+                        c1, c2 = st.columns(2)
+                        c1.metric(
+                            "Melhor preço",
+                            brl(item.get("best_price")),
+                        )
+                        c2.metric(
+                            "Preço médio",
+                            brl(item.get("average_price")),
+                        )
+
+                        st.caption(
+                            f"{int(item.get('observations') or 0)} observações"
+                        )
+
+        label_map = {
+            str(item.get("external_id")): item.get(
+                "title",
+                str(item.get("external_id")),
+            )
+            for item in monitored_products
+        }
+
+        product_ids = list(label_map.keys())
+
+        preferred_id = str(
+            st.session_state.get(
+                "watch_product_id",
+                product_ids[0],
+            )
+        )
+
+        if preferred_id not in product_ids:
+            preferred_id = product_ids[0]
+
+        selected_product_id = st.selectbox(
+            "Produto para análise",
+            options=product_ids,
+            index=product_ids.index(preferred_id),
+            format_func=lambda product_id: label_map.get(
+                product_id,
+                product_id,
+            ),
+        )
+
+        st.session_state.watch_product_id = selected_product_id
+
         analysis = api_get(
-            f"/monitoring/{product_id}",
+            f"/monitoring/{selected_product_id}",
             silent=True,
         )
         history_data = api_get(
-            f"/monitoring/{product_id}/history",
+            f"/monitoring/{selected_product_id}/history",
             silent=True,
         )
 
         if isinstance(analysis, dict) and analysis.get("product_id"):
+            st.divider()
+
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("Preço atual", brl(analysis.get("current_price")))
             m2.metric("Preço médio", brl(analysis.get("average_price")))
@@ -767,16 +841,13 @@ with tab_watch:
                         table = df[
                             ["captured_at", "price", "original_price"]
                         ].copy()
-
                         table["captured_at"] = table[
                             "captured_at"
                         ].dt.strftime("%d/%m/%Y %H:%M")
-
                         table["price"] = table["price"].apply(brl)
                         table["original_price"] = table[
                             "original_price"
                         ].apply(brl)
-
                         table.columns = [
                             "Capturado em",
                             "Preço",
@@ -795,7 +866,9 @@ with tab_watch:
                 st.markdown("### Leitura rápida")
                 st.metric(
                     "Oportunidade",
-                    opportunity_label(analysis.get("opportunity")),
+                    opportunity_label(
+                        analysis.get("opportunity")
+                    ),
                 )
 
                 variation = float(
@@ -818,10 +891,12 @@ with tab_watch:
                     st.info("Preço alinhado à média.")
 
                 st.write(
-                    f"**Observações:** {analysis.get('observations', 0)}"
+                    f"**Observações:** "
+                    f"{analysis.get('observations', 0)}"
                 )
                 st.write(
-                    f"**Preço máximo:** {brl(analysis.get('maximum_price'))}"
+                    f"**Preço máximo:** "
+                    f"{brl(analysis.get('maximum_price'))}"
                 )
 
                 if analysis.get("url"):
@@ -830,21 +905,32 @@ with tab_watch:
                         analysis["url"],
                         use_container_width=True,
                     )
-
         else:
             st.info(
-                "Este produto ainda não possui análise consolidada. "
-                "As buscas reais já alimentam o histórico automaticamente."
+                "Ainda não há análise consolidada para o produto selecionado."
             )
 
+    else:
+        st.info(
+            "Sua carteira ainda está vazia. "
+            "Vá em Descobrir, encontre uma oferta e clique em "
+            "“Monitorar preço”."
+        )
+
     with st.expander("Registrar observação manual"):
+        manual_default_id = (
+            str(st.session_state.get("watch_product_id"))
+            if st.session_state.get("watch_product_id")
+            else "TENIS-001"
+        )
+
         with st.form("manual_snapshot_form"):
             c1, c2 = st.columns(2)
 
             with c1:
                 manual_product_id = st.text_input(
                     "Product ID",
-                    value=product_id or "TENIS-001",
+                    value=manual_default_id,
                 )
                 manual_title = st.text_input(
                     "Nome do produto",
@@ -908,12 +994,19 @@ with tab_alerts:
         unsafe_allow_html=True,
     )
 
+    selected_id = (
+        str(st.session_state.selected_product.get("id"))
+        if st.session_state.selected_product
+        else "TENIS-001"
+    )
+
     with st.form("alert_form"):
         a1, a2, a3 = st.columns([1.5, 1, 1.4])
 
         with a1:
             alert_product = st.text_input(
                 "Product ID",
+                value=selected_id,
                 key="alert_product",
             )
 
@@ -1008,8 +1101,15 @@ with tab_advisor:
         unsafe_allow_html=True,
     )
 
+    advisor_default = (
+        str(st.session_state.selected_product.get("id"))
+        if st.session_state.selected_product
+        else "TENIS-001"
+    )
+
     advisor_product_id = st.text_input(
         "Produto para análise",
+        value=advisor_default,
         key="advisor_product_id",
     )
 

@@ -71,3 +71,20 @@ def get_price_history(external_id: str) -> list[dict]:
             (external_id,),
         ).fetchall()
     return [dict(row) for row in rows]
+
+def list_monitored_products() -> list[dict]:
+    with get_connection() as conn:
+        rows = conn.execute("""
+            SELECT
+                external_id,
+                MAX(title) AS title,
+                COUNT(*) AS observations,
+                MIN(price) AS best_price,
+                AVG(price) AS average_price,
+                MAX(captured_at) AS last_captured_at
+            FROM offer_history
+            GROUP BY external_id
+            ORDER BY MAX(captured_at) DESC
+        """).fetchall()
+
+    return [dict(row) for row in rows]
