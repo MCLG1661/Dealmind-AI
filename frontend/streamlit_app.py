@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import os
 from typing import Any
@@ -202,17 +202,19 @@ st.markdown(
             height: auto;
             color: #475569;
             font-weight: 750;
-        .stTabs [aria-selected="true"] {
-    background: #eef2ff !important;
-    color: #3730a3 !important;
-    border: 1px solid #c7d2fe !important;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08);
-}
+        }
 
-.stTabs [data-baseweb="tab"]:hover {
-    background: #f8fafc !important;
-    color: #111827 !important;
-}
+        .stTabs [aria-selected="true"] {
+            background: #eef2ff !important;
+            color: #3730a3 !important;
+            border: 1px solid #c7d2fe !important;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08);
+        }
+
+        .stTabs [data-baseweb="tab"]:hover {
+            background: #f8fafc !important;
+            color: #111827 !important;
+        }
 
         .stButton > button,
         .stLinkButton > a {
@@ -317,6 +319,15 @@ if "last_search" not in st.session_state:
 
 if "selected_product" not in st.session_state:
     st.session_state.selected_product = None
+
+if "watch_product_id" not in st.session_state:
+    st.session_state.watch_product_id = "TENIS-001"
+
+if "alert_product" not in st.session_state:
+    st.session_state.alert_product = "TENIS-001"
+
+if "advisor_product_id" not in st.session_state:
+    st.session_state.advisor_product_id = "TENIS-001"
 
 
 logo_col, hero_col = st.columns([1.55, 4])
@@ -592,6 +603,42 @@ with tab_discover:
                                     use_container_width=True,
                                 ):
                                     st.session_state.selected_product = product
+                                    selected_id = str(product.get("id"))
+                                    st.session_state.watch_product_id = selected_id
+                                    st.session_state.alert_product = selected_id
+                                    st.session_state.advisor_product_id = selected_id
+
+                                    snapshot_payload = {
+                                        "product_id": str(product.get("id")),
+                                        "title": product.get(
+                                            "name",
+                                            "Produto monitorado",
+                                        ),
+                                        "price": float(
+                                            product.get("price") or 0
+                                        ),
+                                        "original_price": (
+                                            float(product["original_price"])
+                                            if product.get("original_price") is not None
+                                            else None
+                                        ),
+                                        "url": product.get("url"),
+                                        "category_id": (
+                                            product.get("category_id")
+                                            or "shopping"
+                                        ),
+                                    }
+
+                                    snapshot = api_post(
+                                        "/monitoring/snapshots",
+                                        snapshot_payload,
+                                    )
+
+                                    if snapshot:
+                                        st.success(
+                                            "Produto adicionado aos monitorados "
+                                            "com sucesso."
+                                        )
 
             selected = st.session_state.selected_product
 
@@ -667,15 +714,8 @@ with tab_watch:
         unsafe_allow_html=True,
     )
 
-    watch_default = (
-        str(st.session_state.selected_product.get("id"))
-        if st.session_state.selected_product
-        else "TENIS-001"
-    )
-
     product_id = st.text_input(
         "Product ID",
-        value=watch_default,
         key="watch_product_id",
     )
 
@@ -868,19 +908,12 @@ with tab_alerts:
         unsafe_allow_html=True,
     )
 
-    selected_id = (
-        str(st.session_state.selected_product.get("id"))
-        if st.session_state.selected_product
-        else "TENIS-001"
-    )
-
     with st.form("alert_form"):
         a1, a2, a3 = st.columns([1.5, 1, 1.4])
 
         with a1:
             alert_product = st.text_input(
                 "Product ID",
-                value=selected_id,
                 key="alert_product",
             )
 
@@ -975,15 +1008,8 @@ with tab_advisor:
         unsafe_allow_html=True,
     )
 
-    advisor_default = (
-        str(st.session_state.selected_product.get("id"))
-        if st.session_state.selected_product
-        else "TENIS-001"
-    )
-
     advisor_product_id = st.text_input(
         "Produto para análise",
-        value=advisor_default,
         key="advisor_product_id",
     )
 
