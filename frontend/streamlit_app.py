@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import base64
 from typing import Any
 
 import pandas as pd
@@ -222,6 +223,255 @@ st.markdown(
             font-weight: 800 !important;
         }
 
+
+        .dm-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            background: rgba(255,255,255,.92);
+            border: 1px solid var(--dm-border);
+            border-radius: 22px;
+            padding: 14px 18px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, .05);
+            margin-bottom: 1rem;
+            backdrop-filter: blur(12px);
+        }
+
+        .dm-brand-wrap {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .dm-brand-title {
+            color: #0f172a;
+            font-size: 1.15rem;
+            font-weight: 900;
+            line-height: 1.05;
+            margin-bottom: 3px;
+        }
+
+        .dm-brand-sub {
+            color: #64748b;
+            font-size: .82rem;
+            font-weight: 600;
+        }
+
+        .dm-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 11px;
+            border-radius: 999px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #047857;
+            font-size: .78rem;
+            font-weight: 850;
+            white-space: nowrap;
+        }
+
+        .dm-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #10b981;
+            box-shadow: 0 0 0 4px rgba(16,185,129,.12);
+        }
+
+        .dm-page-title {
+            font-size: 2rem;
+            line-height: 1.08;
+            font-weight: 950;
+            color: #0f172a;
+            letter-spacing: -.035em;
+            margin-bottom: 5px;
+        }
+
+        .dm-page-sub {
+            color: #64748b;
+            font-size: .96rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .dm-kpi-card {
+            background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 18px 18px 16px 18px;
+            min-height: 126px;
+            box-shadow: 0 10px 28px rgba(15,23,42,.045);
+        }
+
+        .dm-kpi-icon {
+            font-size: 1.18rem;
+            margin-bottom: 12px;
+        }
+
+        .dm-kpi-label {
+            color: #64748b;
+            font-size: .78rem;
+            font-weight: 750;
+            margin-bottom: 5px;
+        }
+
+        .dm-kpi-value {
+            color: #0f172a;
+            font-size: 1.72rem;
+            font-weight: 950;
+            letter-spacing: -.035em;
+            line-height: 1;
+        }
+
+        .dm-kpi-note {
+            color: #94a3b8;
+            font-size: .74rem;
+            margin-top: 8px;
+        }
+
+        .dm-panel-title {
+            color: #0f172a;
+            font-size: 1.25rem;
+            font-weight: 900;
+            letter-spacing: -.02em;
+            margin-bottom: .15rem;
+        }
+
+        .dm-panel-sub {
+            color: #64748b;
+            font-size: .86rem;
+            margin-bottom: .8rem;
+        }
+
+        .dm-deal-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 17px;
+            box-shadow: 0 8px 24px rgba(15,23,42,.04);
+            min-height: 220px;
+        }
+
+        .dm-deal-rank {
+            color: #94a3b8;
+            font-size: .72rem;
+            font-weight: 850;
+            text-transform: uppercase;
+            letter-spacing: .055em;
+            margin-bottom: 8px;
+        }
+
+        .dm-deal-name {
+            color: #0f172a;
+            font-size: .98rem;
+            font-weight: 900;
+            line-height: 1.27;
+            min-height: 2.5em;
+        }
+
+        .dm-deal-price {
+            color: #0f172a;
+            font-size: 1.65rem;
+            font-weight: 950;
+            letter-spacing: -.035em;
+            margin-top: 10px;
+        }
+
+        .dm-deal-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .dm-mini-score {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 6px 9px;
+            font-size: .74rem;
+            font-weight: 900;
+        }
+
+        .dm-observation {
+            color: #94a3b8;
+            font-size: .74rem;
+        }
+
+        .dm-insight-card {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 58%, #312e81 100%);
+            border-radius: 22px;
+            padding: 22px;
+            color: white;
+            box-shadow: 0 14px 36px rgba(15,23,42,.12);
+            min-height: 205px;
+        }
+
+        .dm-insight-label {
+            color: #cbd5e1;
+            font-size: .76rem;
+            font-weight: 850;
+            text-transform: uppercase;
+            letter-spacing: .055em;
+            margin-bottom: 10px;
+        }
+
+        .dm-insight-main {
+            color: white;
+            font-size: 1.28rem;
+            line-height: 1.28;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        .dm-insight-text {
+            color: #cbd5e1;
+            font-size: .9rem;
+            line-height: 1.52;
+        }
+
+        .dm-dist-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 22px;
+            padding: 20px;
+            min-height: 205px;
+            box-shadow: 0 8px 24px rgba(15,23,42,.04);
+        }
+
+        .dm-dist-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #475569;
+            font-size: .84rem;
+            font-weight: 700;
+            margin: 10px 0 5px 0;
+        }
+
+        .dm-bar-track {
+            height: 8px;
+            background: #eef2f7;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .dm-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #4f46e5, #06b6d4);
+        }
+
+        .dm-section-gap {
+            height: .65rem;
+        }
+
+        @media (max-width: 900px) {
+            .dm-topbar { align-items: flex-start; }
+            .dm-page-title { font-size: 1.65rem; }
+        }
+
         .dm-footer {
             color: #94a3b8;
             text-align: center;
@@ -292,11 +542,11 @@ def opportunity_label(value: str | None) -> str:
 
 
 def score_meta(score: float) -> tuple[str, str]:
-    if score >= 75:
+    if score >= 85:
         return "Excelente oportunidade", "dm-excellent"
-    if score >= 60:
+    if score >= 70:
         return "Boa oportunidade", "dm-good"
-    if score >= 50:
+    if score >= 55:
         return "Oportunidade regular", "dm-fair"
     return "Pouco atrativa", "dm-weak"
 
@@ -314,6 +564,35 @@ def recommendation_meta(value: str | None) -> tuple[str, str]:
     )
 
 
+def portfolio_summary(products: list[dict]) -> dict:
+    total_products = len(products)
+    total_observations = sum(int(item.get("observations") or 0) for item in products)
+    opportunities = [
+        item for item in products
+        if item.get("opportunity") in {"excellent", "good"}
+    ]
+    excellent = [item for item in products if item.get("opportunity") == "excellent"]
+    scores = [float(item.get("deal_score") or 0) for item in products]
+    return {
+        "total_products": total_products,
+        "total_observations": total_observations,
+        "opportunities": len(opportunities),
+        "excellent": len(excellent),
+        "average_score": (sum(scores) / len(scores)) if scores else 0.0,
+    }
+
+
+def top_opportunities(products: list[dict], limit: int = 6) -> list[dict]:
+    ranked = sorted(
+        products,
+        key=lambda item: (
+            -float(item.get("deal_score") or 0),
+            float(item.get("current_price") or item.get("best_price") or float("inf")),
+        ),
+    )
+    return ranked[:limit]
+
+
 if "last_search" not in st.session_state:
     st.session_state.last_search = None
 
@@ -321,39 +600,325 @@ if "selected_product" not in st.session_state:
     st.session_state.selected_product = None
 
 
-logo_col, hero_col = st.columns([1.55, 4])
+health = api_get("/health", silent=True)
+api_online = bool(health)
 
-with logo_col:
-    if os.path.exists(LOGO_PATH):
-        st.image(LOGO_PATH, width=440)
+logo_html = ""
+if os.path.exists(LOGO_PATH):
+    try:
+        with open(LOGO_PATH, "rb") as logo_file:
+            logo_b64 = base64.b64encode(logo_file.read()).decode("utf-8")
+        logo_html = (
+            f'<img src="data:image/png;base64,{logo_b64}" '
+            'style="height:54px;width:auto;object-fit:contain;" />'
+        )
+    except OSError:
+        logo_html = ""
 
-with hero_col:
+status_markup = (
+    '<span class="dm-status-pill">'
+    '<span class="dm-status-dot"></span>Sistema online</span>'
+    if api_online
+    else
+    '<span class="dm-status-pill" '
+    'style="background:#fff7ed;border-color:#fed7aa;color:#c2410c;">'
+    '● Sistema indisponível</span>'
+)
+
+st.markdown(
+    f"""
+    <div class="dm-topbar">
+        <div class="dm-brand-wrap">
+            {logo_html}
+            <div>
+                <div class="dm-brand-title">DealMind AI</div>
+                <div class="dm-brand-sub">
+                    Smart Shopping Intelligence · Price Intelligence Copilot
+                </div>
+            </div>
+        </div>
+        <div>{status_markup}</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+tab_overview, tab_discover, tab_watch, tab_alerts, tab_advisor, tab_status = st.tabs(
+    [
+        "🏠 Visão Geral",
+        "🔎 Descobrir",
+        "📈 Minha Carteira",
+        "🔔 Alertas",
+        "🧠 AI Advisor",
+        "⚙️ Status",
+    ]
+)
+
+
+with tab_overview:
     st.markdown(
         """
-        <div class="dm-hero">
-            <div class="dm-chip">Price Intelligence Copilot</div>
-            <h1>Compre melhor. No momento certo.</h1>
-            <p>
-                Encontre ofertas reais, compare preços, acompanhe histórico e
-                transforme sinais de mercado em decisões de compra mais inteligentes.
-            </p>
+        <div class="dm-page-title">Sua inteligência de compra, em um só lugar.</div>
+        <div class="dm-page-sub">
+            Priorize oportunidades, entenda os sinais da sua carteira e decida com mais contexto.
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-health = api_get("/health", silent=True)
-api_online = bool(health)
+    overview_portfolio = api_get("/monitoring/products", silent=True)
+    overview_products = (
+        overview_portfolio.get("products", [])
+        if isinstance(overview_portfolio, dict)
+        else []
+    )
 
-tab_discover, tab_watch, tab_alerts, tab_advisor, tab_status = st.tabs(
-    [
-        "🔎 Descobrir",
-        "📈 Monitorados",
-        "🔔 Alertas",
-        "🧠 Advisor",
-        "⚙️ Status",
-    ]
-)
+    if overview_products:
+        summary = portfolio_summary(overview_products)
+
+        excellent_count = sum(
+            1 for item in overview_products
+            if float(item.get("deal_score") or 0) >= 85
+        )
+        good_count = sum(
+            1 for item in overview_products
+            if 70 <= float(item.get("deal_score") or 0) < 85
+        )
+        fair_count = sum(
+            1 for item in overview_products
+            if 55 <= float(item.get("deal_score") or 0) < 70
+        )
+        weak_count = sum(
+            1 for item in overview_products
+            if float(item.get("deal_score") or 0) < 55
+        )
+
+        k1, k2, k3, k4 = st.columns(4)
+
+        with k1:
+            st.markdown(
+                f"""
+                <div class="dm-kpi-card">
+                    <div class="dm-kpi-icon">📦</div>
+                    <div class="dm-kpi-label">PRODUTOS MONITORADOS</div>
+                    <div class="dm-kpi-value">{summary["total_products"]}</div>
+                    <div class="dm-kpi-note">Carteira ativa no DealMind</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with k2:
+            st.markdown(
+                f"""
+                <div class="dm-kpi-card">
+                    <div class="dm-kpi-icon">📈</div>
+                    <div class="dm-kpi-label">OBSERVAÇÕES DE PREÇO</div>
+                    <div class="dm-kpi-value">{summary["total_observations"]}</div>
+                    <div class="dm-kpi-note">Base histórica acumulada</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with k3:
+            st.markdown(
+                f"""
+                <div class="dm-kpi-card">
+                    <div class="dm-kpi-icon">🎯</div>
+                    <div class="dm-kpi-label">SINAIS FAVORÁVEIS</div>
+                    <div class="dm-kpi-value">{summary["opportunities"]}</div>
+                    <div class="dm-kpi-note">{excellent_count} excelente(s) · {good_count} boa(s)</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with k4:
+            st.markdown(
+                f"""
+                <div class="dm-kpi-card">
+                    <div class="dm-kpi-icon">🧠</div>
+                    <div class="dm-kpi-label">DEAL SCORE MÉDIO</div>
+                    <div class="dm-kpi-value">{summary["average_score"]:.1f}<span style="font-size:.9rem;color:#94a3b8;">/100</span></div>
+                    <div class="dm-kpi-note">Qualidade média da carteira</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        st.markdown('<div class="dm-section-gap"></div>', unsafe_allow_html=True)
+        st.markdown(
+            """
+            <div class="dm-panel-title">Melhores oportunidades agora</div>
+            <div class="dm-panel-sub">
+                Produtos priorizados automaticamente pelo Deal Score e pelo comportamento recente de preço.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        leaders = top_opportunities(overview_products, limit=6)
+
+        for row_start in range(0, len(leaders), 3):
+            cols = st.columns(3)
+
+            for offset, col in enumerate(cols):
+                idx = row_start + offset
+                if idx >= len(leaders):
+                    continue
+
+                item = leaders[idx]
+                score = float(item.get("deal_score") or 0)
+                label, css_class = score_meta(score)
+
+                price = item.get("current_price")
+                if price is None:
+                    price = item.get("best_price")
+
+                current = float(price or 0)
+                average = float(item.get("average_price") or 0)
+                pct_vs_average = (
+                    ((current - average) / average) * 100
+                    if average > 0
+                    else 0.0
+                )
+
+                observations = int(item.get("observations") or 0)
+                observation_word = (
+                    "observação"
+                    if observations == 1
+                    else "observações"
+                )
+
+                movement_text = (
+                    f"{abs(pct_vs_average):.1f}% abaixo da média"
+                    if pct_vs_average < -0.5
+                    else
+                    f"{pct_vs_average:.1f}% acima da média"
+                    if pct_vs_average > 0.5
+                    else
+                    "Preço alinhado à média"
+                )
+
+                with col:
+                    st.markdown(
+                        f"""
+                        <div class="dm-deal-card">
+                            <div class="dm-deal-rank">TOP {idx + 1} · DEALMIND RANKING</div>
+                            <div class="dm-deal-name">{item.get("title", "Produto monitorado")}</div>
+                            <div class="dm-deal-price">{brl(current)}</div>
+                            <div class="dm-deal-meta">
+                                <span class="dm-mini-score {css_class}">{score:.1f}/100 · {label}</span>
+                            </div>
+                            <div style="margin-top:12px;color:#475569;font-size:.82rem;font-weight:700;">
+                                {movement_text}
+                            </div>
+                            <div class="dm-observation" style="margin-top:7px;">
+                                {observations} {observation_word} de preço
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                    if st.button(
+                        "Ver análise completa",
+                        key=f'overview_{item.get("external_id")}_{idx}',
+                        use_container_width=True,
+                    ):
+                        st.session_state.watch_product_id = str(
+                            item.get("external_id")
+                        )
+                        st.info(
+                            "Produto selecionado. Abra Minha Carteira para ver "
+                            "histórico, Deal Score e análise detalhada."
+                        )
+
+        st.markdown('<div class="dm-section-gap"></div>', unsafe_allow_html=True)
+
+        intelligence_col, distribution_col = st.columns([1.08, 1])
+
+        with intelligence_col:
+            if excellent_count > 0:
+                insight_main = (
+                    f"{excellent_count} oportunidade"
+                    f"{'s' if excellent_count != 1 else ''} "
+                    "merecem atenção imediata."
+                )
+                insight_text = (
+                    "O DealMind encontrou produtos na faixa de maior atratividade. "
+                    "Priorize a revisão dos Top Deals antes de ampliar novas buscas."
+                )
+            elif summary["opportunities"] > 0:
+                insight_main = (
+                    f"{summary['opportunities']} produtos estão "
+                    "em faixa favorável."
+                )
+                insight_text = (
+                    "Há sinais positivos na carteira, mas vale abrir a análise "
+                    "individual e comparar histórico, média e preço atual."
+                )
+            else:
+                insight_main = "A carteira pede paciência neste momento."
+                insight_text = (
+                    "Nenhum produto apresenta sinal forte agora. Continue "
+                    "monitorando para capturar quedas e novas oportunidades."
+                )
+
+            st.markdown(
+                f"""
+                <div class="dm-insight-card">
+                    <div class="dm-insight-label">DEALMIND INSIGHTS</div>
+                    <div class="dm-insight-main">{insight_main}</div>
+                    <div class="dm-insight-text">{insight_text}</div>
+                    <div style="margin-top:18px;color:#94a3b8;font-size:.78rem;">
+                        Score médio da carteira: {summary["average_score"]:.1f}/100
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with distribution_col:
+            total = max(len(overview_products), 1)
+
+            excellent_pct = round((excellent_count / total) * 100)
+            good_pct = round((good_count / total) * 100)
+            fair_pct = round((fair_count / total) * 100)
+            weak_pct = max(
+                0,
+                100 - excellent_pct - good_pct - fair_pct,
+            )
+
+            st.markdown(
+                f"""
+                <div class="dm-dist-card">
+                    <div class="dm-panel-title" style="font-size:1.05rem;">Distribuição da carteira</div>
+                    <div class="dm-panel-sub">Como os produtos estão classificados agora.</div>
+
+                    <div class="dm-dist-row"><span>Excelente</span><span>{excellent_count}</span></div>
+                    <div class="dm-bar-track"><div class="dm-bar-fill" style="width:{excellent_pct}%"></div></div>
+
+                    <div class="dm-dist-row"><span>Boa</span><span>{good_count}</span></div>
+                    <div class="dm-bar-track"><div class="dm-bar-fill" style="width:{good_pct}%"></div></div>
+
+                    <div class="dm-dist-row"><span>Regular</span><span>{fair_count}</span></div>
+                    <div class="dm-bar-track"><div class="dm-bar-fill" style="width:{fair_pct}%"></div></div>
+
+                    <div class="dm-dist-row"><span>Fraca / aguardar</span><span>{weak_count}</span></div>
+                    <div class="dm-bar-track"><div class="dm-bar-fill" style="width:{weak_pct}%"></div></div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    else:
+        st.info(
+            "Sua visão geral será construída conforme você adicionar produtos "
+            "à carteira. Use Descobrir para começar."
+        )
 
 
 with tab_discover:
@@ -938,7 +1503,7 @@ with tab_watch:
                 preferred_id = product_ids[0]
 
             selected_product_id = st.selectbox(
-                "Produto para análise",
+                "Escolha um produto",
                 options=product_ids,
                 index=product_ids.index(preferred_id),
                 format_func=lambda product_id: label_map.get(
@@ -1102,7 +1667,7 @@ with tab_watch:
 
             with c1:
                 manual_product_id = st.text_input(
-                    "Product ID",
+                    "Identificador do produto",
                     value=manual_default_id,
                 )
                 manual_title = st.text_input(
@@ -1178,7 +1743,7 @@ with tab_alerts:
 
         with a1:
             alert_product = st.text_input(
-                "Product ID",
+                "Identificador do produto",
                 value=selected_id,
                 key="alert_product",
             )
@@ -1281,7 +1846,7 @@ with tab_advisor:
     )
 
     advisor_product_id = st.text_input(
-        "Produto para análise",
+        "Escolha um produto para o Advisor",
         value=advisor_default,
         key="advisor_product_id",
     )
