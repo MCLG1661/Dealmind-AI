@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from app.database.db import get_connection, is_postgres
 from app.integrations.mercado_livre import MercadoLivreOffer
 
+
 def save_price_snapshot(
     external_id: str,
     title: str,
@@ -15,37 +16,84 @@ def save_price_snapshot(
 
     with get_connection() as conn:
         if is_postgres():
-            row = conn.execute("""
+            row = conn.execute(
+                """
                 INSERT INTO offer_history (
-                    external_id, title, price, original_price,
-                    permalink, category_id, captured_at
+                    external_id,
+                    title,
+                    price,
+                    original_price,
+                    permalink,
+                    category_id,
+                    captured_at
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
-                RETURNING id, external_id, title, price, original_price,
-                          permalink, category_id, captured_at
-            """, (
-                external_id, title, price, original_price,
-                permalink, category_id, captured_at,
-            )).fetchone()
+                RETURNING
+                    id,
+                    external_id,
+                    title,
+                    price,
+                    original_price,
+                    permalink,
+                    category_id,
+                    captured_at
+                """,
+                (
+                    external_id,
+                    title,
+                    price,
+                    original_price,
+                    permalink,
+                    category_id,
+                    captured_at,
+                ),
+            ).fetchone()
         else:
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 INSERT INTO offer_history (
-                    external_id, title, price, original_price,
-                    permalink, category_id, captured_at
+                    external_id,
+                    title,
+                    price,
+                    original_price,
+                    permalink,
+                    category_id,
+                    captured_at
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (
-                external_id, title, price, original_price,
-                permalink, category_id, captured_at,
-            ))
-            row = conn.execute("""
-                SELECT id, external_id, title, price, original_price,
-                       permalink, category_id, captured_at
+                """,
+                (
+                    external_id,
+                    title,
+                    price,
+                    original_price,
+                    permalink,
+                    category_id,
+                    captured_at,
+                ),
+            )
+
+            row = conn.execute(
+                """
+                SELECT
+                    id,
+                    external_id,
+                    title,
+                    price,
+                    original_price,
+                    permalink,
+                    category_id,
+                    captured_at
                 FROM offer_history
                 WHERE id = ?
-            """, (cursor.lastrowid,)).fetchone()
+                """,
+                (cursor.lastrowid,),
+            ).fetchone()
+
         conn.commit()
+
     return dict(row)
+
 
 def save_offer_snapshot(offer: MercadoLivreOffer) -> dict:
     return save_price_snapshot(
@@ -57,34 +105,54 @@ def save_offer_snapshot(offer: MercadoLivreOffer) -> dict:
         category_id=offer.category_id,
     )
 
+
 def get_price_history(external_id: str) -> list[dict]:
     placeholder = "%s" if is_postgres() else "?"
+
     with get_connection() as conn:
         rows = conn.execute(
             f"""
-            SELECT id, external_id, title, price, original_price,
-                   permalink, category_id, captured_at
+            SELECT
+                id,
+                external_id,
+                title,
+                price,
+                original_price,
+                permalink,
+                category_id,
+                captured_at
             FROM offer_history
             WHERE external_id = {placeholder}
             ORDER BY captured_at ASC
             """,
             (external_id,),
         ).fetchall()
+
     return [dict(row) for row in rows]
+
 
 def list_monitored_products() -> list[dict]:
     with get_connection() as conn:
-        rows = conn.execute("""
+        rows = conn.execute(
+            """
             SELECT
-                external_id,
-                MAX(title) AS title,
+                h.external_id,
+                MAX(h.title) AS title,
                 COUNT(*) AS observations,
-                MIN(price) AS best_price,
-                AVG(price) AS average_price,
-                MAX(captured_at) AS last_captured_at
-            FROM offer_history
-            GROUP BY external_id
-            ORDER BY MAX(captured_at) DESC
-        """).fetchall()
+                MIN(h.price) AS best_price,
+                AVG(h.price) AS average_price,
+                (
+                    SELECT latest.price
+                    FROM offer_history AS latest
+                    WHERE latest.external_id = h.external_id
+                    ORDER BY latest.captured_at DESC
+                    LIMIT 1
+                ) AS current_price,
+                MAX(h.captured_at) AS last_captured_at
+            FROM offer_history AS h
+            GROUP BY h.external_id
+            ORDER BY MAX(h.captured_at) DESC
+            """
+        ).fetchall()
 
     return [dict(row) for row in rows]

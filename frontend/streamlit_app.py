@@ -694,7 +694,7 @@ with tab_watch:
         <div class="dm-section">
             <div class="dm-section-title">Produtos monitorados</div>
             <div class="dm-muted">
-                Acompanhe sua carteira de produtos e abra a análise completa sem precisar digitar Product ID.
+                Acompanhe sua carteira, filtre os produtos mais relevantes e abra a análise completa sem precisar digitar Product ID.
             </div>
         </div>
         """,
@@ -709,212 +709,385 @@ with tab_watch:
     )
 
     if monitored_products:
+        total_products = len(monitored_products)
         total_observations = sum(
             int(item.get("observations") or 0)
             for item in monitored_products
         )
-        best_prices = [
-            float(item["best_price"])
+        opportunities_now = sum(
+            1
             for item in monitored_products
-            if item.get("best_price") is not None
-        ]
+            if item.get("opportunity") in {"excellent", "good"}
+        )
 
         k1, k2, k3 = st.columns(3)
-        k1.metric("Produtos monitorados", len(monitored_products))
+        k1.metric("Produtos monitorados", total_products)
         k2.metric("Observações acumuladas", total_observations)
-        k3.metric(
-            "Melhor preço da carteira",
-            brl(min(best_prices) if best_prices else None),
-        )
+        k3.metric("Oportunidades agora", opportunities_now)
+
+        filters = st.columns([2.2, 1.3, 1.1])
+
+        with filters[0]:
+            portfolio_search = st.text_input(
+                "Buscar produto",
+                placeholder="Ex.: Nike, Mizuno, Olympikus...",
+                key="portfolio_search",
+            )
+
+        with filters[1]:
+            portfolio_sort = st.selectbox(
+                "Ordenar por",
+                [
+                    "Mais recentes",
+                    "Mais observações",
+                    "Menor preço",
+                    "Maior preço",
+                    "Nome A–Z",
+                ],
+                key="portfolio_sort",
+            )
+
+        with filters[2]:
+            min_observations = st.selectbox(
+                "Mín. observações",
+                [1, 2, 3, 5, 10],
+                key="portfolio_min_observations",
+            )
+
+        search_term = portfolio_search.strip().lower()
+        filtered_products = [
+            item
+            for item in monitored_products
+            if int(item.get("observations") or 0) >= min_observations
+            and (
+                not search_term
+                or search_term in str(item.get("title") or "").lower()
+            )
+        ]
+
+        if portfolio_sort == "Mais observações":
+            filtered_products.sort(
+                key=lambda item: -int(item.get("observations") or 0)
+            )
+        elif portfolio_sort == "Menor preço":
+            filtered_products.sort(
+                key=lambda item: float(
+                    item["best_price"]
+                    if item.get("best_price") is not None
+                    else float("inf")
+                )
+            )
+        elif portfolio_sort == "Maior preço":
+            filtered_products.sort(
+                key=lambda item: -float(item.get("best_price") or 0)
+            )
+        elif portfolio_sort == "Nome A–Z":
+            filtered_products.sort(
+                key=lambda item: str(item.get("title") or "").lower()
+            )
+        else:
+            filtered_products.sort(
+                key=lambda item: str(item.get("last_captured_at") or ""),
+                reverse=True,
+            )
+
+        page_size = 9
+        total_filtered = len(filtered_products)
+        total_pages = max(1, (total_filtered + page_size - 1) // page_size)
+
+        if "portfolio_page" not in st.session_state:
+            st.session_state.portfolio_page = 1
+
+        if st.session_state.portfolio_page > total_pages:
+            st.session_state.portfolio_page = total_pages
+
+        page = st.session_state.portfolio_page
+        start_idx = (page - 1) * page_size
+        end_idx = min(start_idx + page_size, total_filtered)
+        page_products = filtered_products[start_idx:end_idx]
 
         st.markdown("### Sua carteira")
 
-        for start in range(0, len(monitored_products), 3):
-            cols = st.columns(3)
-            for offset, col in enumerate(cols):
-                idx = start + offset
-                if idx >= len(monitored_products):
-                    continue
-
-                item = monitored_products[idx]
-
-                with col:
-                    with st.container(border=True):
-                        st.markdown(
-                            f'<div class="dm-product-title">{item.get("title", "Produto monitorado")}</div>',
-                            unsafe_allow_html=True,
-                        )
-                        st.caption(f"ID: {item.get('external_id', '—')}")
-
-                        c1, c2 = st.columns(2)
-                        c1.metric(
-                            "Melhor preço",
-                            brl(item.get("best_price")),
-                        )
-                        c2.metric(
-                            "Preço médio",
-                            brl(item.get("average_price")),
-                        )
-
-                        st.caption(
-                            f"{int(item.get('observations') or 0)} observações"
-                        )
-
-        label_map = {
-            str(item.get("external_id")): item.get(
-                "title",
-                str(item.get("external_id")),
-            )
-            for item in monitored_products
-        }
-
-        product_ids = list(label_map.keys())
-
-        preferred_id = str(
-            st.session_state.get(
-                "watch_product_id",
-                product_ids[0],
-            )
-        )
-
-        if preferred_id not in product_ids:
-            preferred_id = product_ids[0]
-
-        selected_product_id = st.selectbox(
-            "Produto para análise",
-            options=product_ids,
-            index=product_ids.index(preferred_id),
-            format_func=lambda product_id: label_map.get(
-                product_id,
-                product_id,
-            ),
-        )
-
-        st.session_state.watch_product_id = selected_product_id
-
-        analysis = api_get(
-            f"/monitoring/{selected_product_id}",
-            silent=True,
-        )
-        history_data = api_get(
-            f"/monitoring/{selected_product_id}/history",
-            silent=True,
-        )
-
-        if isinstance(analysis, dict) and analysis.get("product_id"):
-            st.divider()
-
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Preço atual", brl(analysis.get("current_price")))
-            m2.metric("Preço médio", brl(analysis.get("average_price")))
-            m3.metric("Melhor preço", brl(analysis.get("minimum_price")))
-            m4.metric(
-                "Deal Score",
-                f"{float(analysis.get('deal_score', 0)):.1f}/100",
+        if total_filtered:
+            st.caption(
+                f"Exibindo {start_idx + 1}–{end_idx} de "
+                f"{total_filtered} produtos filtrados."
             )
 
-            chart_col, insight_col = st.columns([2.1, 1])
+            for card_start in range(0, len(page_products), 3):
+                cols = st.columns(3)
 
-            with chart_col:
-                st.markdown("### Evolução do preço")
+                for offset, col in enumerate(cols):
+                    idx = card_start + offset
+                    if idx >= len(page_products):
+                        continue
 
-                if (
-                    isinstance(history_data, dict)
-                    and history_data.get("history")
+                    item = page_products[idx]
+                    external_id = str(item.get("external_id"))
+
+                    with col:
+                        with st.container(border=True):
+                            st.markdown(
+                                f'<div class="dm-product-title">'
+                                f'{item.get("title", "Produto monitorado")}'
+                                f'</div>',
+                                unsafe_allow_html=True,
+                            )
+
+                            st.caption(f"ID · {external_id}")
+
+                            c1, c2 = st.columns(2)
+                            c1.metric(
+                                "Preço atual",
+                                brl(
+                                    item.get("current_price")
+                                    if item.get("current_price") is not None
+                                    else item.get("best_price")
+                                ),
+                            )
+                            c2.metric(
+                                "Preço médio",
+                                brl(item.get("average_price")),
+                            )
+
+                            deal_score = float(item.get("deal_score") or 0)
+                            opportunity = item.get("opportunity") or "weak"
+
+                            opportunity_labels = {
+                                "excellent": "Excelente oportunidade",
+                                "good": "Boa oportunidade",
+                                "fair": "Oportunidade moderada",
+                                "weak": "Aguardar",
+                            }
+
+                            opportunity_icons = {
+                                "excellent": "🟢",
+                                "good": "🔵",
+                                "fair": "🟡",
+                                "weak": "⚪",
+                            }
+
+                            st.markdown(
+                                f"**Deal Score {deal_score:.1f}/100**  \n"
+                                f"{opportunity_icons.get(opportunity, '⚪')} "
+                                f"{opportunity_labels.get(opportunity, 'Aguardar')}"
+                            )
+
+                            observations = int(item.get("observations") or 0)
+                            observation_label = (
+                                "observação"
+                                if observations == 1
+                                else "observações"
+                            )
+
+                            st.caption(f"{observations} {observation_label}")
+
+                            if st.button(
+                                "Ver análise",
+                                key=(
+                                    f"portfolio_select_"
+                                    f"{external_id}_"
+                                    f"{start_idx + idx}"
+                                ),
+                                use_container_width=True,
+                            ):
+                                st.session_state.watch_product_id = external_id
+                                st.rerun()
+
+            nav1, nav2, nav3 = st.columns([1, 1.2, 1])
+
+            with nav1:
+                if st.button(
+                    "← Anterior",
+                    disabled=page <= 1,
+                    use_container_width=True,
                 ):
-                    df = pd.DataFrame(history_data["history"])
-                    df["captured_at"] = pd.to_datetime(
-                        df["captured_at"],
-                        errors="coerce",
-                    )
-                    df = (
-                        df.dropna(subset=["captured_at"])
-                        .sort_values("captured_at")
-                    )
+                    st.session_state.portfolio_page -= 1
+                    st.rerun()
 
-                    if not df.empty:
-                        st.line_chart(
-                            df.set_index("captured_at")[["price"]],
-                            use_container_width=True,
+            with nav2:
+                st.markdown(
+                    f"<div style='text-align:center;padding-top:.55rem;"
+                    f"color:#64748b;font-weight:700;'>"
+                    f"Página {page} de {total_pages}</div>",
+                    unsafe_allow_html=True,
+                )
+
+            with nav3:
+                if st.button(
+                    "Próxima →",
+                    disabled=page >= total_pages,
+                    use_container_width=True,
+                ):
+                    st.session_state.portfolio_page += 1
+                    st.rerun()
+
+            label_map = {
+                str(item.get("external_id")): item.get(
+                    "title",
+                    str(item.get("external_id")),
+                )
+                for item in filtered_products
+            }
+            product_ids = list(label_map.keys())
+
+            preferred_id = str(
+                st.session_state.get("watch_product_id", product_ids[0])
+            )
+            if preferred_id not in product_ids:
+                preferred_id = product_ids[0]
+
+            selected_product_id = st.selectbox(
+                "Produto para análise",
+                options=product_ids,
+                index=product_ids.index(preferred_id),
+                format_func=lambda product_id: label_map.get(
+                    product_id,
+                    product_id,
+                ),
+                key="monitored_product_selector_v5",
+            )
+
+            st.session_state.watch_product_id = selected_product_id
+
+            analysis = api_get(
+                f"/monitoring/{selected_product_id}",
+                silent=True,
+            )
+            history_data = api_get(
+                f"/monitoring/{selected_product_id}/history",
+                silent=True,
+            )
+
+            if isinstance(analysis, dict) and analysis.get("product_id"):
+                st.divider()
+                st.markdown(
+                    f"### {label_map.get(selected_product_id, 'Análise do produto')}"
+                )
+
+                m1, m2, m3, m4 = st.columns(4)
+                m1.metric(
+                    "Preço atual",
+                    brl(analysis.get("current_price")),
+                )
+                m2.metric(
+                    "Preço médio",
+                    brl(analysis.get("average_price")),
+                )
+                m3.metric(
+                    "Melhor preço",
+                    brl(analysis.get("minimum_price")),
+                )
+                m4.metric(
+                    "Deal Score",
+                    f"{float(analysis.get('deal_score', 0)):.1f}/100",
+                )
+
+                chart_col, insight_col = st.columns([2.1, 1])
+
+                with chart_col:
+                    st.markdown("### Evolução do preço")
+
+                    if (
+                        isinstance(history_data, dict)
+                        and history_data.get("history")
+                    ):
+                        df = pd.DataFrame(history_data["history"])
+                        df["captured_at"] = pd.to_datetime(
+                            df["captured_at"],
+                            errors="coerce",
+                        )
+                        df = (
+                            df.dropna(subset=["captured_at"])
+                            .sort_values("captured_at")
                         )
 
-                        table = df[
-                            ["captured_at", "price", "original_price"]
-                        ].copy()
-                        table["captured_at"] = table[
-                            "captured_at"
-                        ].dt.strftime("%d/%m/%Y %H:%M")
-                        table["price"] = table["price"].apply(brl)
-                        table["original_price"] = table[
-                            "original_price"
-                        ].apply(brl)
-                        table.columns = [
-                            "Capturado em",
-                            "Preço",
-                            "Preço original",
-                        ]
+                        if not df.empty:
+                            st.line_chart(
+                                df.set_index("captured_at")[["price"]],
+                                use_container_width=True,
+                            )
 
-                        st.dataframe(
-                            table,
-                            use_container_width=True,
-                            hide_index=True,
+                            table = df[
+                                ["captured_at", "price", "original_price"]
+                            ].copy()
+                            table["captured_at"] = table[
+                                "captured_at"
+                            ].dt.strftime("%d/%m/%Y %H:%M")
+                            table["price"] = table["price"].apply(brl)
+                            table["original_price"] = table[
+                                "original_price"
+                            ].apply(brl)
+                            table.columns = [
+                                "Capturado em",
+                                "Preço",
+                                "Preço original",
+                            ]
+                            st.dataframe(
+                                table,
+                                use_container_width=True,
+                                hide_index=True,
+                            )
+                    else:
+                        st.info("Ainda não há histórico suficiente.")
+
+                with insight_col:
+                    st.markdown("### Leitura rápida")
+                    st.metric(
+                        "Oportunidade",
+                        opportunity_label(
+                            analysis.get("opportunity")
+                        ),
+                    )
+
+                    variation = float(
+                        analysis.get(
+                            "variation_vs_average_percent",
+                            0,
                         )
-                else:
-                    st.info("Ainda não há histórico suficiente.")
+                        or 0
+                    )
 
-            with insight_col:
-                st.markdown("### Leitura rápida")
-                st.metric(
-                    "Oportunidade",
-                    opportunity_label(
-                        analysis.get("opportunity")
-                    ),
+                    if variation < 0:
+                        st.success(
+                            f"{abs(variation):.2f}% abaixo da média."
+                        )
+                    elif variation > 0:
+                        st.warning(
+                            f"{variation:.2f}% acima da média."
+                        )
+                    else:
+                        st.info("Preço alinhado à média.")
+
+                    st.write(
+                        f"**Observações:** "
+                        f"{analysis.get('observations', 0)}"
+                    )
+                    st.write(
+                        f"**Preço máximo:** "
+                        f"{brl(analysis.get('maximum_price'))}"
+                    )
+
+                    if analysis.get("url"):
+                        st.link_button(
+                            "Abrir produto",
+                            analysis["url"],
+                            use_container_width=True,
+                        )
+            else:
+                st.info(
+                    "Ainda não há análise consolidada para o produto selecionado."
                 )
 
-                variation = float(
-                    analysis.get(
-                        "variation_vs_average_percent",
-                        0,
-                    )
-                    or 0
-                )
-
-                if variation < 0:
-                    st.success(
-                        f"{abs(variation):.2f}% abaixo da média."
-                    )
-                elif variation > 0:
-                    st.warning(
-                        f"{variation:.2f}% acima da média."
-                    )
-                else:
-                    st.info("Preço alinhado à média.")
-
-                st.write(
-                    f"**Observações:** "
-                    f"{analysis.get('observations', 0)}"
-                )
-                st.write(
-                    f"**Preço máximo:** "
-                    f"{brl(analysis.get('maximum_price'))}"
-                )
-
-                if analysis.get("url"):
-                    st.link_button(
-                        "Abrir produto",
-                        analysis["url"],
-                        use_container_width=True,
-                    )
         else:
             st.info(
-                "Ainda não há análise consolidada para o produto selecionado."
+                "Nenhum produto corresponde aos filtros selecionados."
             )
 
     else:
         st.info(
-            "Sua carteira ainda está vazia. "
-            "Vá em Descobrir, encontre uma oferta e clique em "
-            "“Monitorar preço”."
+            "Sua carteira ainda está vazia. Vá em Descobrir, "
+            "encontre uma oferta e clique em “Monitorar preço”."
         )
 
     with st.expander("Registrar observação manual"):

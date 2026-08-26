@@ -7,11 +7,15 @@ from app.repositories.offer_repository import (
 )
 from app.services.monitoring_service import (
     build_price_analysis,
+    calculate_deal_score,
     record_product_snapshot,
 )
 
 
-router = APIRouter(prefix="/monitoring", tags=["Monitoring"])
+router = APIRouter(
+    prefix="/monitoring",
+    tags=["Monitoring"],
+)
 
 
 class ProductSnapshotCreate(BaseModel):
@@ -19,12 +23,17 @@ class ProductSnapshotCreate(BaseModel):
     title: str = Field(min_length=1)
     price: float = Field(gt=0)
     url: HttpUrl
-    original_price: float | None = Field(default=None, gt=0)
+    original_price: float | None = Field(
+        default=None,
+        gt=0,
+    )
     category_id: str | None = None
 
 
 @router.post("/snapshots", status_code=201)
-def create_snapshot(payload: ProductSnapshotCreate) -> dict:
+def create_snapshot(
+    payload: ProductSnapshotCreate,
+) -> dict:
     return record_product_snapshot(
         payload.product_id,
         payload.title,
@@ -39,27 +48,83 @@ def create_snapshot(payload: ProductSnapshotCreate) -> dict:
 def monitoring_products() -> dict:
     products = list_monitored_products()
 
+    enriched_products = []
+
+    for product in products:
+        current_price = float(
+            product.get("current_price") or 0
+        )
+        average_price = float(
+            product.get("average_price") or 0
+        )
+        best_price = float(
+            product.get("best_price") or 0
+        )
+
+        deal_score = calculate_deal_score(
+            current_price,
+            average_price,
+            best_price,
+        )
+
+        opportunity = (
+            "excellent"
+            if deal_score >= 85
+            else "good"
+            if deal_score >= 70
+            else "fair"
+            if deal_score >= 55
+            else "weak"
+        )
+
+        enriched_products.append(
+            {
+                **product,
+                "current_price": round(
+                    current_price,
+                    2,
+                ),
+                "best_price": round(
+                    best_price,
+                    2,
+                ),
+                "average_price": round(
+                    average_price,
+                    2,
+                ),
+                "deal_score": deal_score,
+                "opportunity": opportunity,
+            }
+        )
+
     return {
-        "count": len(products),
-        "products": products,
+        "count": len(enriched_products),
+        "products": enriched_products,
     }
 
 
 @router.get("/{product_id}")
-def monitoring_analysis(product_id: str) -> dict:
+def monitoring_analysis(
+    product_id: str,
+) -> dict:
     analysis = build_price_analysis(product_id)
 
     if analysis.get("observations") == 0:
         raise HTTPException(
             status_code=404,
-            detail="No monitoring data found for this product.",
+            detail=(
+                "No monitoring data found "
+                "for this product."
+            ),
         )
 
     return analysis
 
 
 @router.get("/{product_id}/history")
-def monitoring_history(product_id: str) -> dict:
+def monitoring_history(
+    product_id: str,
+) -> dict:
     history = get_price_history(product_id)
 
     return {
