@@ -549,6 +549,27 @@ st.markdown(
             font-size: .76rem;
         }
 
+
+        .dm-alert-status {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: .76rem;
+            font-weight: 850;
+        }
+        .dm-alert-waiting { background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; }
+        .dm-alert-close { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+        .dm-alert-hit { background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; }
+        .dm-alert-insight {
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #f8fafc;
+            color: #475569;
+            font-size: .82rem;
+            line-height: 1.45;
+        }
+
         .dm-footer {
             color: #94a3b8;
             text-align: center;
@@ -1818,105 +1839,212 @@ elif page == "Alertas":
     st.markdown(
         """
         <div class="dm-section">
-            <div class="dm-section-title">Alertas de preço</div>
+            <div class="dm-section-title">Smart Price Alerts</div>
             <div class="dm-muted">
-                Defina quanto você quer pagar e acompanhe os gatilhos ativos.
+                Defina seu preço-alvo e acompanhe quanto falta para o momento de compra.
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    selected_id = (
-        str(st.session_state.selected_product.get("id"))
-        if st.session_state.selected_product
-        else "TENIS-001"
+    alert_portfolio = api_get("/monitoring/products", silent=True)
+    alert_products = (
+        alert_portfolio.get("products", [])
+        if isinstance(alert_portfolio, dict)
+        else []
     )
 
-    with st.form("alert_form"):
-        a1, a2, a3 = st.columns([1.5, 1, 1.4])
+    product_map = {
+        str(item.get("external_id")): item
+        for item in alert_products
+        if item.get("external_id") is not None
+    }
 
-        with a1:
-            alert_product = st.text_input(
-                "Identificador do produto",
-                value=selected_id,
-                key="alert_product",
-            )
-
-        with a2:
-            target_price = st.number_input(
-                "Preço-alvo",
-                min_value=0.01,
-                value=320.00,
-                step=10.0,
-            )
-
-        with a3:
-            contact = st.text_input(
-                "Contato",
-                placeholder="e-mail ou identificador",
-            )
-
-        submit_alert = st.form_submit_button(
-            "Criar alerta",
-            type="primary",
-            use_container_width=True,
+    if product_map:
+        product_ids = list(product_map.keys())
+        selected_default = (
+            str(st.session_state.selected_product.get("id"))
+            if st.session_state.selected_product
+            else product_ids[0]
         )
+        if selected_default not in product_ids:
+            selected_default = product_ids[0]
 
-    if submit_alert:
-        alert = api_post(
-            "/alerts",
-            {
-                "product_id": alert_product,
-                "target_price": target_price,
-                "contact": contact or None,
-            },
-        )
+        st.markdown("### Criar novo alerta")
 
-        if alert:
-            st.success(
-                f"Alerta #{alert['id']} criado para "
-                f"{brl(alert['target_price'])}."
+        with st.form("alert_form"):
+            a1, a2, a3 = st.columns([1.7, 1, 1.25])
+
+            with a1:
+                alert_product = st.selectbox(
+                    "Produto",
+                    options=product_ids,
+                    index=product_ids.index(selected_default),
+                    format_func=lambda pid: product_map.get(pid, {}).get("title", pid),
+                    key="alert_product_smart",
+                )
+
+            selected_item = product_map.get(alert_product, {})
+            raw_current = selected_item.get("current_price")
+            if raw_current is None:
+                raw_current = selected_item.get("best_price")
+            current_price = float(raw_current or 0)
+
+            with a2:
+                suggested_target = max(
+                    0.01,
+                    round(current_price * 0.92, 2) if current_price > 0 else 320.00,
+                )
+                target_price = st.number_input(
+                    "Preço-alvo",
+                    min_value=0.01,
+                    value=suggested_target,
+                    step=10.0,
+                )
+
+            with a3:
+                contact = st.text_input(
+                    "Contato",
+                    placeholder="e-mail ou identificador",
+                )
+
+            if current_price > 0:
+                st.caption(
+                    f"Preço atual: {brl(current_price)} · "
+                    f"sugestão DealMind: {brl(suggested_target)}"
+                )
+
+            submit_alert = st.form_submit_button(
+                "Criar alerta inteligente",
+                type="primary",
+                use_container_width=True,
             )
+
+        if submit_alert:
+            alert = api_post(
+                "/alerts",
+                {
+                    "product_id": alert_product,
+                    "target_price": target_price,
+                    "contact": contact or None,
+                },
+            )
+            if alert:
+                st.success(
+                    f"Alerta #{alert['id']} criado para {brl(alert['target_price'])}."
+                )
+    else:
+        st.info("Adicione produtos à Minha Carteira antes de criar alertas inteligentes.")
 
     alerts = api_get("/alerts", silent=True)
 
     if isinstance(alerts, list) and alerts:
-        df_alerts = pd.DataFrame(alerts)
+        enriched_alerts = []
 
-        active_count = (
-            int(df_alerts["active"].sum())
-            if "active" in df_alerts
-            else 0
-        )
+        for alert in alerts:
+            product_id = str(alert.get("product_id"))
+            product = product_map.get(product_id, {})
 
-        m1, m2 = st.columns(2)
-        m1.metric("Alertas cadastrados", len(df_alerts))
+            current = product.get("current_price")
+            if current is None:
+                current = product.get("best_price")
+            current_price = float(current) if current is not None else None
+
+            target = float(alert.get("target_price") or 0)
+            active = bool(alert.get("active", 0))
+
+            gap_value = None
+            gap_pct = None
+            if current_price is not None and target > 0:
+                gap_value = current_price - target
+                gap_pct = (gap_value / current_price) * 100 if current_price > 0 else 0
+
+            if not active:
+                status = "Disparado"
+                status_class = "dm-alert-hit"
+            elif current_price is not None and current_price <= target:
+                status = "Preço-alvo atingido"
+                status_class = "dm-alert-hit"
+            elif gap_pct is not None and gap_pct <= 5:
+                status = "Muito perto do alvo"
+                status_class = "dm-alert-close"
+            else:
+                status = "Aguardando queda"
+                status_class = "dm-alert-waiting"
+
+            enriched_alerts.append({
+                **alert,
+                "title": product.get("title") or product_id,
+                "current_price": current_price,
+                "gap_value": gap_value,
+                "gap_pct": gap_pct,
+                "status": status,
+                "status_class": status_class,
+            })
+
+        active_count = sum(1 for item in enriched_alerts if bool(item.get("active", 0)))
+        close_count = sum(1 for item in enriched_alerts if item.get("status") == "Muito perto do alvo")
+
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Alertas cadastrados", len(enriched_alerts))
         m2.metric("Alertas ativos", active_count)
+        m3.metric("Próximos do alvo", close_count)
 
-        if "target_price" in df_alerts:
-            df_alerts["target_price"] = df_alerts[
-                "target_price"
-            ].apply(brl)
+        st.markdown("### Acompanhamento inteligente")
 
-        if "active" in df_alerts:
-            df_alerts["Status"] = df_alerts["active"].apply(
-                lambda value: "🟢 Ativo" if value else "✅ Disparado"
-            )
+        for row_start in range(0, len(enriched_alerts), 2):
+            cols = st.columns(2)
 
-        st.dataframe(
-            df_alerts.rename(
-                columns={
-                    "id": "ID",
-                    "product_id": "Produto",
-                    "target_price": "Preço-alvo",
-                    "contact": "Contato",
-                    "created_at": "Criado em",
-                }
-            ),
-            use_container_width=True,
-            hide_index=True,
-        )
+            for offset, col in enumerate(cols):
+                idx = row_start + offset
+                if idx >= len(enriched_alerts):
+                    continue
+
+                item = enriched_alerts[idx]
+
+                with col:
+                    with st.container(border=True):
+                        st.markdown(f"**{item.get('title', 'Produto')}**")
+                        st.caption(f"Alerta #{item.get('id')}")
+
+                        c1, c2 = st.columns(2)
+                        c1.metric("Preço atual", brl(item.get("current_price")))
+                        c2.metric("Preço-alvo", brl(item.get("target_price")))
+
+                        st.markdown(
+                            f'<span class="dm-alert-status {item.get("status_class")}">'
+                            f'{item.get("status")}</span>',
+                            unsafe_allow_html=True,
+                        )
+
+                        gap_value = item.get("gap_value")
+                        gap_pct = item.get("gap_pct")
+
+                        if gap_value is not None and gap_pct is not None:
+                            if gap_value > 0:
+                                st.markdown(
+                                    f'<div class="dm-alert-insight">'
+                                    f'O preço precisa cair <strong>{brl(gap_value)}</strong> '
+                                    f'({abs(gap_pct):.1f}%) para atingir seu alvo.'
+                                    f'</div>',
+                                    unsafe_allow_html=True,
+                                )
+                            else:
+                                st.markdown(
+                                    f'<div class="dm-alert-insight">'
+                                    f'🎯 O preço atual já está <strong>{brl(abs(gap_value))}</strong> '
+                                    f'abaixo do seu alvo.'
+                                    f'</div>',
+                                    unsafe_allow_html=True,
+                                )
+                        else:
+                            st.caption(
+                                "Aguardando preço atual disponível para calcular a distância até o alvo."
+                            )
+
+                        if item.get("contact"):
+                            st.caption(f"Contato: {item.get('contact')}")
     else:
         st.info("Nenhum alerta cadastrado até o momento.")
 
