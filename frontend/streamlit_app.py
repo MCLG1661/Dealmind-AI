@@ -20,7 +20,7 @@ st.set_page_config(
     page_title="DealMind AI",
     page_icon="💡",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 st.markdown(
@@ -43,7 +43,7 @@ st.markdown(
 
         .block-container {
             max-width: 1440px;
-            padding-top: 1.25rem;
+            padding-top: 4.5rem !important;
             padding-bottom: 3rem;
         }
 
@@ -472,6 +472,83 @@ st.markdown(
             .dm-page-title { font-size: 1.65rem; }
         }
 
+
+        section[data-testid="stSidebar"] {
+            background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+            border-right: 1px solid rgba(255,255,255,.08);
+        }
+
+        section[data-testid="stSidebar"] > div {
+            padding-top: 1.15rem;
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+        section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
+            color: #cbd5e1;
+        }
+
+        section[data-testid="stSidebar"] .stRadio > label {
+            color: #94a3b8 !important;
+            font-size: .72rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        section[data-testid="stSidebar"] div[role="radiogroup"] {
+            gap: .35rem;
+        }
+
+        section[data-testid="stSidebar"] div[role="radiogroup"] label {
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            padding: .62rem .72rem;
+            transition: all .16s ease;
+        }
+
+        section[data-testid="stSidebar"] div[role="radiogroup"] label:hover {
+            background: rgba(255,255,255,.06);
+            border-color: rgba(255,255,255,.08);
+        }
+
+        section[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {
+            background: linear-gradient(135deg, rgba(79,70,229,.32), rgba(14,165,233,.16));
+            border-color: rgba(129,140,248,.36);
+            box-shadow: inset 3px 0 0 #818cf8;
+        }
+
+        section[data-testid="stSidebar"] div[role="radiogroup"] p {
+            color: #e5e7eb !important;
+            font-weight: 760 !important;
+        }
+
+        .dm-side-title {
+            color: #ffffff;
+            font-size: 1.05rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-top: .25rem;
+        }
+
+        .dm-side-sub {
+            color: #94a3b8;
+            font-size: .75rem;
+            line-height: 1.35;
+            margin-top: .25rem;
+            margin-bottom: .85rem;
+        }
+
+        .dm-side-status {
+            margin-top: 1rem;
+            padding: .7rem .75rem;
+            border-radius: 12px;
+            background: rgba(255,255,255,.045);
+            border: 1px solid rgba(255,255,255,.08);
+            color: #cbd5e1;
+            font-size: .76rem;
+        }
+
         .dm-footer {
             color: #94a3b8;
             text-align: center;
@@ -603,39 +680,69 @@ if "selected_product" not in st.session_state:
 health = api_get("/health", silent=True)
 api_online = bool(health)
 
-logo_html = ""
-if os.path.exists(LOGO_PATH):
-    try:
-        with open(LOGO_PATH, "rb") as logo_file:
-            logo_b64 = base64.b64encode(logo_file.read()).decode("utf-8")
-        logo_html = (
-            f'<img src="data:image/png;base64,{logo_b64}" '
-            'style="height:54px;width:auto;object-fit:contain;" />'
-        )
-    except OSError:
-        logo_html = ""
+with st.sidebar:
+    if os.path.exists(LOGO_PATH):
+        st.image(LOGO_PATH, use_container_width=True)
+
+    st.markdown(
+        """
+        <div class="dm-side-title">DealMind AI</div>
+        <div class="dm-side-sub">Smart Shopping Intelligence</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    page = st.radio(
+        "Navegação",
+        [
+            "Visão Geral",
+            "Descobrir",
+            "Minha Carteira",
+            "Alertas",
+            "AI Advisor",
+            "Status",
+        ],
+        format_func=lambda value: {
+            "Visão Geral": "🏠  Visão Geral",
+            "Descobrir": "🔎  Descobrir",
+            "Minha Carteira": "📈  Minha Carteira",
+            "Alertas": "🔔  Alertas",
+            "AI Advisor": "🧠  AI Advisor",
+            "Status": "⚙️  Status",
+        }[value],
+        label_visibility="collapsed",
+        key="dm_page",
+    )
+
+    side_status = "🟢 API online" if api_online else "🟠 API indisponível"
+    st.markdown(
+        f'<div class="dm-side-status">{side_status}<br>'
+        f'<span style="color:#64748b;">DealMind v0.5 · Product Experience</span></div>',
+        unsafe_allow_html=True,
+    )
+
+page_context = {
+    "Visão Geral": ("Cockpit de inteligência", "Priorize o que merece atenção agora."),
+    "Descobrir": ("Descobrir oportunidades", "Pesquise ofertas reais e compare sinais de compra."),
+    "Minha Carteira": ("Minha Carteira", "Acompanhe preços, histórico e Deal Score dos produtos monitorados."),
+    "Alertas": ("Alertas de preço", "Defina gatilhos e acompanhe condições de compra."),
+    "AI Advisor": ("AI Advisor", "Transforme sinais de preço em uma recomendação objetiva."),
+    "Status": ("Status da plataforma", "Consulte serviços, providers e disponibilidade da API."),
+}
+current_title, current_subtitle = page_context[page]
 
 status_markup = (
-    '<span class="dm-status-pill">'
-    '<span class="dm-status-dot"></span>Sistema online</span>'
+    '<span class="dm-status-pill"><span class="dm-status-dot"></span>Sistema online</span>'
     if api_online
-    else
-    '<span class="dm-status-pill" '
-    'style="background:#fff7ed;border-color:#fed7aa;color:#c2410c;">'
-    '● Sistema indisponível</span>'
+    else '<span class="dm-status-pill" style="background:#fff7ed;border-color:#fed7aa;color:#c2410c;">● Sistema indisponível</span>'
 )
 
 st.markdown(
     f"""
     <div class="dm-topbar">
-        <div class="dm-brand-wrap">
-            {logo_html}
-            <div>
-                <div class="dm-brand-title">DealMind AI</div>
-                <div class="dm-brand-sub">
-                    Smart Shopping Intelligence · Price Intelligence Copilot
-                </div>
-            </div>
+        <div>
+            <div class="dm-brand-title">{current_title}</div>
+            <div class="dm-brand-sub">{current_subtitle}</div>
         </div>
         <div>{status_markup}</div>
     </div>
@@ -644,19 +751,7 @@ st.markdown(
 )
 
 
-tab_overview, tab_discover, tab_watch, tab_alerts, tab_advisor, tab_status = st.tabs(
-    [
-        "🏠 Visão Geral",
-        "🔎 Descobrir",
-        "📈 Minha Carteira",
-        "🔔 Alertas",
-        "🧠 AI Advisor",
-        "⚙️ Status",
-    ]
-)
-
-
-with tab_overview:
+if page == "Visão Geral":
     st.markdown(
         """
         <div class="dm-page-title">Sua inteligência de compra, em um só lugar.</div>
@@ -921,7 +1016,7 @@ with tab_overview:
         )
 
 
-with tab_discover:
+elif page == "Descobrir":
     st.markdown(
         """
         <div class="dm-section">
@@ -1253,7 +1348,7 @@ with tab_discover:
             st.info("Nenhuma oferta encontrada com os filtros informados.")
 
 
-with tab_watch:
+elif page == "Minha Carteira":
     st.markdown(
         """
         <div class="dm-section">
@@ -1719,7 +1814,7 @@ with tab_watch:
                 st.success("Preço registrado com sucesso.")
 
 
-with tab_alerts:
+elif page == "Alertas":
     st.markdown(
         """
         <div class="dm-section">
@@ -1826,7 +1921,7 @@ with tab_alerts:
         st.info("Nenhum alerta cadastrado até o momento.")
 
 
-with tab_advisor:
+elif page == "AI Advisor":
     st.markdown(
         """
         <div class="dm-section">
@@ -1928,7 +2023,7 @@ with tab_advisor:
             )
 
 
-with tab_status:
+elif page == "Status":
     st.markdown(
         """
         <div class="dm-section">
