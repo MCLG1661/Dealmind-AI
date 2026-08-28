@@ -1,4 +1,4 @@
-# <img width="500" height="250" alt="ChatGPT Image 28 de ago  de 2026, 11_51_38" src="https://github.com/user-attachments/assets/e1eaae9d-152b-481f-a4ee-0a9706e6032e" /> DealMind AI
+# <img width="250" height="250" alt="ChatGPT Image 28 de ago  de 2026, 11_51_38" src="https://github.com/user-attachments/assets/e1eaae9d-152b-481f-a4ee-0a9706e6032e" /> DealMind AI
 DealMind AI
 
 > Inteligência de preços para encontrar melhores oportunidades de compra.
