@@ -577,7 +577,6 @@ Mais do que um comparador de preços, o DealMind foi concebido como um **copilot
 Marketing • Gestão • Data Analytics • Inteligência Artificial aplicada a negócios
 
 - GitHub: [MCLG1661](https://github.com/MCLG1661)
-
 - LinkedIn: [Marcus Guedes](https://www.linkedin.com/in/marcusguedes/)
 
 ---
