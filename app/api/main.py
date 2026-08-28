@@ -12,6 +12,7 @@ from app.integrations.mercado_livre import MercadoLivreClient, MercadoLivreError
 from app.providers.mercado_livre_provider import MercadoLivreProviderError
 from app.repositories.alert_repository import create_alert, list_alerts
 from app.repositories.offer_repository import get_price_history
+from app.services.monitoring_service import evaluate_price_alerts
 from app.services.provider_service import (
     UnknownProviderError,
     list_providers,
@@ -30,6 +31,7 @@ app = FastAPI(
 
 app.include_router(monitoring_router)
 app.include_router(advisor_router)
+
 
 class AlertCreate(BaseModel):
     product_id: str = Field(min_length=1)
@@ -110,16 +112,45 @@ def product_history(product_id: str) -> dict:
 
 @app.post("/alerts", status_code=201)
 def alerts_create(payload: AlertCreate) -> dict:
-    return create_alert(
+    alert = create_alert(
         product_id=payload.product_id,
         target_price=payload.target_price,
         contact=payload.contact,
     )
 
+    history = get_price_history(payload.product_id)
+
+    if not history:
+        return {
+            **alert,
+            "triggered": False,
+            "current_price": None,
+        }
+
+    current_price = float(history[-1]["price"])
+
+    triggered_alerts = evaluate_price_alerts(
+        payload.product_id,
+        current_price,
+    )
+
+    triggered = any(
+        item.get("alert_id") == alert.get("id")
+        for item in triggered_alerts
+    )
+
+    return {
+        **alert,
+        "active": 0 if triggered else alert.get("active", 1),
+        "triggered": triggered,
+        "current_price": current_price,
+    }
+
 
 @app.get("/alerts")
 def alerts_list() -> list[dict]:
     return list_alerts()
+
 
 @app.get("/auth/me")
 def mercado_livre_current_user() -> dict:
@@ -162,6 +193,7 @@ def mercado_livre_current_user() -> dict:
             "error_type": type(exc).__name__,
             "error": str(exc),
         }
+
 
 @app.get("/auth/mercadolivre")
 def mercado_livre_authorize() -> dict:
